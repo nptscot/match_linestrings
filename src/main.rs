@@ -1,9 +1,11 @@
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, BufWriter};
 
 use anyhow::{bail, Result};
 use clap::Parser;
-use geo::LineString;
+use geo::{GeometryCollection, LineString};
+use rstar::{primitives::GeomWithData, RTree};
+use utils::Mercator;
 
 #[derive(Parser)]
 struct Args {
@@ -46,11 +48,54 @@ fn main() -> Result<()> {
         midpt_dist_threshold: args.midpt_dist_threshold,
     };
 
-    let source_features = read_features(&args.source)?;
-    let target_features = read_features(&args.target)?;
+    println!(
+        "Reading {} and {} and transforming to Mercator",
+        args.source, args.target
+    );
+    let mut source_features = read_features(&args.source)?;
+    let mut target_features = read_features(&args.target)?;
 
-    //let results =
-    //match_linestrings::match_linestrings(&rtree, graph.roads.iter().map(|r| &r.linestring), &opts);
+    // TODO Expensive clones
+    let collection = GeometryCollection::from(
+        source_features
+            .iter()
+            .chain(target_features.iter())
+            .map(|f| f.linestring.clone())
+            .collect::<Vec<_>>(),
+    );
+    let Some(mercator) = Mercator::from(collection) else {
+        bail!("Empty inputs");
+    };
+    for f in source_features.iter_mut().chain(target_features.iter_mut()) {
+        mercator.to_mercator_in_place(&mut f.linestring);
+    }
+
+    println!("Building RTree for the source");
+    let source_rtree = RTree::bulk_load(
+        source_features
+            .iter()
+            .map(|f| GeomWithData::new(f.linestring.clone(), f.idx))
+            .collect(),
+    );
+
+    println!("Matching and writing output.geojson");
+    let mut writer =
+        geojson::FeatureWriter::from_writer(BufWriter::new(File::create("output.geojson")?));
+    let matches = match_linestrings::match_linestrings(
+        &source_rtree,
+        target_features.iter().map(|f| &f.linestring),
+        &opts,
+    );
+    for (target, matched_idx) in target_features.into_iter().zip(matches.into_iter()) {
+        // Only write successful matches
+        let Some(idx) = matched_idx else {
+            continue;
+        };
+        let mut f = mercator.to_wgs84_gj(&target.linestring);
+        f.set_property("original_props", target.props);
+        f.set_property("matched_props", source_features[idx].props.clone());
+        writer.write_feature(&f)?;
+    }
 
     Ok(())
 }
