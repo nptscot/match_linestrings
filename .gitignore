@@ -1,3 +1,4 @@
 *.swp
 target
-output.geojson
+match_linestrings/Cargo.lock
+cli/output.geojson

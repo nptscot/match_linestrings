@@ -16,7 +16,7 @@ This is an early experiment forked from the NPW codebase; use with caution. It d
 ## How to use
 
 ```
-cargo run --release -- --source tests/southwark/source.geojson --target tests/southwark/target.geojson
+cd cli; cargo run --release -- --source ../tests/southwark/source.geojson --target ../tests/southwark/target.geojson
 ```
 
 ## How it works

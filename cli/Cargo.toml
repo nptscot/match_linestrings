@@ -1,0 +1,14 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.82"
+clap = { version = "4.5.20", features = ["derive"] }
+geo = "0.29.3"
+geojson = { git = "https://github.com/georust/geojson", features = ["geo-types"] }
+match_linestrings = { path = "../match_linestrings" }
+rstar = "0.12.0"
+utils = { git = "https://github.com/a-b-street/utils", features = ["serde"] }
+serde_json = "1.0.133"
