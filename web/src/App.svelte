@@ -1,15 +1,23 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import "@picocss/pico/css/pico.jade.min.css";
-  import type { Map } from "maplibre-gl";
+  import type { Map, MapMouseEvent } from "maplibre-gl";
   import {
     GeoJSON,
     MapLibre,
     LineLayer,
     hoverStateFilter,
+    MapEvents,
   } from "svelte-maplibre";
   import { Layout } from "svelte-utils/two_column_layout";
   import { Popup, emptyGeojson, bbox } from "svelte-utils/map";
   import type { FeatureCollection } from "geojson";
+  import init, { matchLineStrings } from "backend";
+
+  let loaded = false;
+
+  let pinnedColor = "green";
+  let matchColor = "cyan";
 
   let sourceGj = emptyGeojson();
   let sourceColor = "red";
@@ -18,8 +26,43 @@
   let targetGj = emptyGeojson();
   let targetColor = "blue";
   let targetOpacity = 0.5;
+  let pinnedTargetIdx: number | null = null;
 
   let map: Map | undefined;
+
+  onMount(async () => {
+    await init();
+    loaded = true;
+  });
+
+  $: matches = recalculate(loaded, sourceGj, targetGj);
+  $: matchSourceIdx = pinnedTargetIdx == null ? null : matches[pinnedTargetIdx];
+
+  function recalculate(
+    loaded: boolean,
+    sourceGj: FeatureCollection,
+    targetGj: FeatureCollection,
+  ): [number | null][] {
+    if (
+      !loaded ||
+      sourceGj.features.length == 0 ||
+      targetGj.features.length == 0
+    ) {
+      return [];
+    }
+    try {
+      return JSON.parse(
+        matchLineStrings(JSON.stringify(sourceGj), JSON.stringify(targetGj)),
+      );
+    } catch (err) {
+      window.alert(`Bug: ${err}`);
+      return [];
+    }
+  }
+
+  function onMapClick(e: MapMouseEvent) {
+    pinnedTargetIdx = null;
+  }
 
   let fileInput: HTMLInputElement;
   async function loadFiles(e: Event) {
@@ -36,6 +79,7 @@
       sourceGj = await loadFile(fileInput.files[0]);
       targetGj = await loadFile(fileInput.files[1]);
       zoomFit();
+      pinnedTargetIdx = null;
     } catch (err) {
       window.alert(`Bad input file: ${err}`);
     }
@@ -46,7 +90,7 @@
     let gj = JSON.parse(text);
 
     // Overwrite feature IDs
-    let id = 1;
+    let id = 0;
     for (let f of gj.features) {
       f.id = id++;
     }
@@ -81,36 +125,36 @@
     </label>
 
     {#if sourceGj.features.length > 0}
-    <hr />
+      <hr />
 
-    <div>
-      <button on:click={swap}>Swap</button>
-    </div>
-    <div><button on:click={zoomFit}>Zoom to fit</button></div>
+      <div>
+        <button on:click={swap}>Swap</button>
+      </div>
+      <div><button on:click={zoomFit}>Zoom to fit</button></div>
 
-    <div style:background={sourceColor}>Source</div>
-    <label>
-      Opacity:
-      <input
-        type="range"
-        min="0.0"
-        max="1.0"
-        step="0.1"
-        bind:value={sourceOpacity}
-      />
-    </label>
+      <div style:background={sourceColor}>Source</div>
+      <label>
+        Opacity:
+        <input
+          type="range"
+          min="0.0"
+          max="1.0"
+          step="0.1"
+          bind:value={sourceOpacity}
+        />
+      </label>
 
-    <div style:background={targetColor}>Target</div>
-    <label>
-      Opacity:
-      <input
-        type="range"
-        min="0.0"
-        max="1.0"
-        step="0.1"
-        bind:value={targetOpacity}
-      />
-    </label>
+      <div style:background={targetColor}>Target</div>
+      <label>
+        Opacity:
+        <input
+          type="range"
+          min="0.0"
+          max="1.0"
+          step="0.1"
+          bind:value={targetOpacity}
+        />
+      </label>
     {/if}
   </div>
 
@@ -124,6 +168,8 @@
         console.log(e.detail.error);
       }}
     >
+      <MapEvents on:click={onMapClick} />
+
       <GeoJSON data={sourceGj}>
         <LineLayer
           manageHoverState
@@ -131,7 +177,12 @@
           hoverCursor="pointer"
           paint={{
             "line-width": 8,
-            "line-color": sourceColor,
+            "line-color": [
+              "case",
+              ["==", ["id"], matchSourceIdx ?? -1],
+              matchColor,
+              sourceColor,
+            ],
             "line-opacity": hoverStateFilter(sourceOpacity, 1.0),
           }}
         >
@@ -148,14 +199,16 @@
           hoverCursor="pointer"
           paint={{
             "line-width": 8,
-            "line-color": targetColor,
+            "line-color": [
+              "case",
+              ["==", ["id"], pinnedTargetIdx ?? -1],
+              pinnedColor,
+              targetColor,
+            ],
             "line-opacity": hoverStateFilter(targetOpacity, 1.0),
           }}
-        >
-          <Popup openOn="click" let:props>
-            <pre>{JSON.stringify(props)}</pre>
-          </Popup>
-        </LineLayer>
+          on:click={(e) => (pinnedTargetIdx = e.detail.features[0].id)}
+        />
       </GeoJSON>
     </MapLibre>
   </div>
