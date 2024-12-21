@@ -80,6 +80,7 @@
       <input bind:this={fileInput} on:change={loadFiles} type="file" multiple />
     </label>
 
+    {#if sourceGj.features.length > 0}
     <hr />
 
     <div>
@@ -110,7 +111,9 @@
         bind:value={targetOpacity}
       />
     </label>
+    {/if}
   </div>
+
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre
       style="https://api.maptiler.com/maps/dataviz/style.json?key=MZEJTanw3WpxRvt7qDfo"
