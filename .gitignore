@@ -1,4 +1,6 @@
 *.swp
 target
+node_modules
+
 match_linestrings/Cargo.lock
 cli/output.geojson
