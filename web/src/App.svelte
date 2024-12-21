@@ -1,67 +1,49 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import "@picocss/pico/css/pico.jade.min.css";
-  import type { Map, MapMouseEvent } from "maplibre-gl";
+  import type { Map } from "maplibre-gl";
   import {
     GeoJSON,
     MapLibre,
     LineLayer,
     hoverStateFilter,
-    MapEvents,
   } from "svelte-maplibre";
   import { Layout } from "svelte-utils/two_column_layout";
-  import { Popup, emptyGeojson, bbox } from "svelte-utils/map";
-  import type { FeatureCollection } from "geojson";
+  import { emptyGeojson, bbox } from "svelte-utils/map";
+  import type { Feature, FeatureCollection } from "geojson";
   import init, { matchLineStrings } from "backend";
-
-  let loaded = false;
-
-  let pinnedColor = "green";
-  let matchColor = "cyan";
-
-  let sourceGj = emptyGeojson();
-  let sourceColor = "red";
-  let sourceOpacity = 0.8;
-
-  let targetGj = emptyGeojson();
-  let targetColor = "blue";
-  let targetOpacity = 0.5;
-  let pinnedTargetIdx: number | null = null;
 
   let map: Map | undefined;
 
+  let sourceGj = emptyGeojson();
+  let sourceColor = "red";
+
+  let targetGj = emptyGeojson();
+  let targetColor = "blue";
+  let hoveredTarget: Feature | null = null;
+
+  let matches: [number | null][] = [];
+
   onMount(async () => {
     await init();
-    loaded = true;
   });
 
-  $: matches = recalculate(loaded, sourceGj, targetGj);
-  $: matchSourceIdx = pinnedTargetIdx == null ? null : matches[pinnedTargetIdx];
+  $: matchSourceIdx = hoveredTarget == null ? null : matches[hoveredTarget.id];
 
-  function recalculate(
-    loaded: boolean,
-    sourceGj: FeatureCollection,
-    targetGj: FeatureCollection,
-  ): [number | null][] {
-    if (
-      !loaded ||
-      sourceGj.features.length == 0 ||
-      targetGj.features.length == 0
-    ) {
-      return [];
-    }
+  function recalculate() {
     try {
-      return JSON.parse(
+      matches = JSON.parse(
         matchLineStrings(JSON.stringify(sourceGj), JSON.stringify(targetGj)),
       );
     } catch (err) {
       window.alert(`Bug: ${err}`);
-      return [];
+      return;
     }
-  }
 
-  function onMapClick(e: MapMouseEvent) {
-    pinnedTargetIdx = null;
+    // Modify targetGj, so we can style based on matches
+    for (let [idx, f] of targetGj.features.entries()) {
+      f.properties.has_match = matches[idx] != null;
+    }
   }
 
   let fileInput: HTMLInputElement;
@@ -79,7 +61,8 @@
       sourceGj = await loadFile(fileInput.files[0]);
       targetGj = await loadFile(fileInput.files[1]);
       zoomFit();
-      pinnedTargetIdx = null;
+      hoveredTarget = null;
+      recalculate();
     } catch (err) {
       window.alert(`Bad input file: ${err}`);
     }
@@ -111,7 +94,7 @@
 
   function swap() {
     [sourceGj, targetGj] = [targetGj, sourceGj];
-    [sourceOpacity, targetOpacity] = [targetOpacity, sourceOpacity];
+    recalculate();
   }
 </script>
 
@@ -132,29 +115,15 @@
       </div>
       <div><button on:click={zoomFit}>Zoom to fit</button></div>
 
-      <div style:background={sourceColor}>Source</div>
-      <label>
-        Opacity:
-        <input
-          type="range"
-          min="0.0"
-          max="1.0"
-          step="0.1"
-          bind:value={sourceOpacity}
-        />
-      </label>
+      <div style:background={sourceColor}>Sources</div>
+      <p>{sourceGj.features.length} sources</p>
 
       <div style:background={targetColor}>Target</div>
-      <label>
-        Opacity:
-        <input
-          type="range"
-          min="0.0"
-          max="1.0"
-          step="0.1"
-          bind:value={targetOpacity}
-        />
-      </label>
+      <p>
+        {targetGj.features.length} targets, with {matches.filter(
+          (x) => x != null,
+        ).length} matching a source
+      </p>
     {/if}
   </div>
 
@@ -168,46 +137,29 @@
         console.log(e.detail.error);
       }}
     >
-      <MapEvents on:click={onMapClick} />
-
       <GeoJSON data={sourceGj}>
         <LineLayer
           manageHoverState
-          eventsIfTopMost
-          hoverCursor="pointer"
           paint={{
-            "line-width": 8,
-            "line-color": [
-              "case",
-              ["==", ["id"], matchSourceIdx ?? -1],
-              matchColor,
-              sourceColor,
-            ],
-            "line-opacity": hoverStateFilter(sourceOpacity, 1.0),
+            "line-width": ["case", ["==", ["id"], matchSourceIdx ?? -1], 8, 5],
+            "line-color": sourceColor,
+            "line-opacity": hoverStateFilter(0.5, 1.0),
           }}
-        >
-          <Popup openOn="click" let:props>
-            <pre>{JSON.stringify(props)}</pre>
-          </Popup>
-        </LineLayer>
+        />
       </GeoJSON>
 
       <GeoJSON data={targetGj}>
         <LineLayer
           manageHoverState
-          eventsIfTopMost
-          hoverCursor="pointer"
           paint={{
             "line-width": 8,
-            "line-color": [
-              "case",
-              ["==", ["id"], pinnedTargetIdx ?? -1],
-              pinnedColor,
-              targetColor,
-            ],
-            "line-opacity": hoverStateFilter(targetOpacity, 1.0),
+            "line-color": targetColor,
+            "line-opacity": hoverStateFilter(
+              ["case", ["get", "has_match"], 0.5, 0.2],
+              1.0,
+            ),
           }}
-          on:click={(e) => (pinnedTargetIdx = e.detail.features[0].id)}
+          bind:hovered={hoveredTarget}
         />
       </GeoJSON>
     </MapLibre>
