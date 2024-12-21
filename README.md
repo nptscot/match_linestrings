@@ -4,6 +4,12 @@ This crate takes a source and target dataset consisting of LineStrings in a Eucl
 
 This is an early experiment forked from the NPW codebase; use with caution. It depends on some not thoroughly tested georust additions for LineString slicing in https://github.com/a-b-street/utils/.
 
+## Installation
+
+```bash
+cargo install --git https://github.com/nptscot/match_linestrings
+```
+
 ## Roadmap
 
 - Get good results for all NPW use cases
@@ -15,8 +21,20 @@ This is an early experiment forked from the NPW codebase; use with caution. It d
 
 ## How to use
 
+```bash
+cli --source <source.geojson> --target <target.geojson>
 ```
+
+```
+# If you have not installed the cli with cargo:
 cd cli; cargo run --release -- --source ../tests/southwark/source.geojson --target ../tests/southwark/target.geojson
+```
+
+## Example
+
+```bash
+# programmatically download geojson representing this relation: https://www.openstreetmap.org/relation/6386965
+pip install requests osmtogeojson
 ```
 
 ## How it works
