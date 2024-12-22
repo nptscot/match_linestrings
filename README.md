@@ -4,6 +4,8 @@ This crate takes a source and target dataset consisting of LineStrings in a Eucl
 
 This is an early experiment forked from the NPW codebase; use with caution. It depends on some not thoroughly tested georust additions for LineString slicing in https://github.com/a-b-street/utils/.
 
+https://github.com/JosiahParry/anime is a more rigorous approach that handles partial matches between sources and targets, which appears necessary in many real-world cases.
+
 ## Roadmap
 
 - Get good results for all NPW use cases
@@ -15,13 +17,15 @@ This is an early experiment forked from the NPW codebase; use with caution. It d
 
 ## How to use
 
+Try interactively with https://nptscot.github.io/match_linestrings/.
+
 ```
 cd cli; cargo run --release -- --source ../tests/southwark/source.geojson --target ../tests/southwark/target.geojson
 ```
 
 ## How it works
 
-The approach is inspired by. https://github.com/nptscot/rnetmatch.
+The approach is inspired by https://github.com/nptscot/rnetmatch.
 
 For each target linestring:
 
