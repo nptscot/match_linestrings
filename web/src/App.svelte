@@ -89,6 +89,8 @@
     let id = 0;
     for (let f of gj.features) {
       f.id = id++;
+      // Make sure properties aren't null
+      f.properties ??= {};
     }
 
     return gj;
