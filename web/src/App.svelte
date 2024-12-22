@@ -12,6 +12,7 @@
   import { emptyGeojson, bbox } from "svelte-utils/map";
   import type { Feature, FeatureCollection } from "geojson";
   import init, { matchLineStrings } from "backend";
+  import Settings from "./Settings.svelte";
 
   let map: Map | undefined;
 
@@ -21,6 +22,13 @@
   let targetGj = emptyGeojson();
   let targetColor = "blue";
   let hoveredTarget: Feature | null = null;
+
+  let options = {
+    buffer_meters: 20.0,
+    angle_diff_threshold: 10.0,
+    length_ratio_threshold: 1.1,
+    midpt_dist_threshold: 15.0,
+  };
 
   let matches: [number | null][] = [];
 
@@ -33,7 +41,11 @@
   function recalculate() {
     try {
       matches = JSON.parse(
-        matchLineStrings(JSON.stringify(sourceGj), JSON.stringify(targetGj)),
+        matchLineStrings(
+          JSON.stringify(sourceGj),
+          JSON.stringify(targetGj),
+          options,
+        ),
       );
     } catch (err) {
       window.alert(`Bug: ${err}`);
@@ -44,6 +56,7 @@
     for (let [idx, f] of targetGj.features.entries()) {
       f.properties.has_match = matches[idx] != null;
     }
+    targetGj = targetGj;
   }
 
   let fileInput: HTMLInputElement;
@@ -124,6 +137,8 @@
           (x) => x != null,
         ).length} matching a source
       </p>
+
+      <Settings bind:options onChange={recalculate} />
     {/if}
   </div>
 

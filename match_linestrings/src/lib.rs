@@ -1,7 +1,7 @@
 use anyhow::Result;
 use geo::{Distance, Euclidean, Length, LineInterpolatePoint, LineLocatePoint, LineString, Point};
 use rstar::{primitives::GeomWithData, RTree, RTreeObject, AABB};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utils::{LineSplit, Mercator};
 
 /// For every target LineString, look for the best matching source LineString and return its
@@ -108,6 +108,7 @@ pub fn debug_match_linestrings<'a, T: Copy>(
     Ok(output)
 }
 
+#[derive(Deserialize)]
 pub struct Options {
     /// Expand the bounding box around each target by this amount in all directions
     pub buffer_meters: f64,
