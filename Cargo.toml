@@ -1,0 +1,21 @@
+[workspace]
+members = ["backend", "cli", "match_linestrings"]
+
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+
+[workspace.dependencies]
+anyhow = "1.0.82"
+geo = "0.30.0"
+geojson = { git = "https://github.com/georust/geojson", features = ["geo-types"] }
+rstar = "0.12.0"
+serde = "1.0.188"
+serde_json = "1.0.133"
+utils = { git = "https://github.com/a-b-street/utils", features = ["serde"] }
+
+# For local development, build dependencies in release mode once, but otherwise
+# use dev profile and avoid wasm-opt.
+[profile.dev.package."*"]
+opt-level = 3

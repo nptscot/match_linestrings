@@ -1,5 +1,5 @@
 use anyhow::Result;
-use geo::{Distance, Euclidean, Length, LineInterpolatePoint, LineLocatePoint, LineString, Point};
+use geo::{Distance, Euclidean, InterpolatableLine, Length, LineLocatePoint, LineString, Point};
 use rstar::{primitives::GeomWithData, RTree, RTreeObject, AABB};
 use serde::{Deserialize, Serialize};
 use utils::{LineSplit, Mercator};
@@ -150,8 +150,8 @@ impl CompareLineStrings {
     fn new(main: &LineString, candidate: &LineString) -> Self {
         let angle_main = angle_ls(main);
         let angle_candidate = angle_ls(candidate);
-        let length_main = main.length::<Euclidean>();
-        let length_candidate = candidate.length::<Euclidean>();
+        let length_main = Euclidean.length(main);
+        let length_candidate = Euclidean.length(candidate);
         let midpt_dist = midpoint_distance(main, candidate);
 
         Self {
@@ -191,9 +191,9 @@ fn angle_ls(ls: &LineString) -> f64 {
 // Distance in meters between the middle of each linestring. Because ls1 and ls2 might point
 // opposite directions, using the start/end point is unnecessarily trickier.
 fn midpoint_distance(ls1: &LineString, ls2: &LineString) -> f64 {
-    let pt1 = ls1.line_interpolate_point(0.5).unwrap();
-    let pt2 = ls2.line_interpolate_point(0.5).unwrap();
-    Euclidean::distance(pt1, pt2)
+    let pt1 = ls1.point_at_ratio_from_start(&Euclidean, 0.5).unwrap();
+    let pt2 = ls2.point_at_ratio_from_start(&Euclidean, 0.5).unwrap();
+    Euclidean.distance(pt1, pt2)
 }
 
 // Expand an AABB by some amount on all sides

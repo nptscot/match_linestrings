@@ -7,23 +7,18 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-anyhow = "1.0.86"
+anyhow = { workspace = true }
 console_error_panic_hook = "0.1.6"
 console_log = "1.0.0"
-geo = "0.29.3"
-geojson = { git = "https://github.com/georust/geojson", features = ["geo-types"] }
+geo = { workspace = true }
+geojson = { workspace = true }
 js-sys = "0.3.69"
 log = "0.4.20"
 match_linestrings = { path = "../match_linestrings" }
-rstar = "0.12.0"
-serde = "1.0.188"
-serde_json = "1.0.117"
+rstar = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 serde-wasm-bindgen = "0.6.0"
-utils = { git = "https://github.com/a-b-street/utils" }
+utils = { workspace = true }
 wasm-bindgen = "0.2.87"
 web-sys = { version = "0.3.64", features = ["console"] }
-
-# For local development, build dependencies in release mode once, but otherwise
-# use dev profile and avoid wasm-opt.
-[profile.dev.package."*"]
-opt-level = 3
