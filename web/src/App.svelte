@@ -22,6 +22,7 @@
   let targetGj = emptyGeojson();
   let targetColor = "blue";
   let hoveredTarget: Feature | null = null;
+  let showTargetsWithMatches = true;
 
   let options = {
     buffer_meters: 20.0,
@@ -41,7 +42,9 @@
   });
 
   $: matchingSourceIndices =
-    hoveredTarget == null ? [] : matches[hoveredTarget.id as number].matching_sources;
+    hoveredTarget == null
+      ? []
+      : matches[hoveredTarget.id as number].matching_sources;
 
   function recalculate() {
     try {
@@ -144,6 +147,10 @@
           (x) => x.matching_sources.length > 0,
         ).length} matching a source
       </p>
+      <label>
+        <input type="checkbox" bind:checked={showTargetsWithMatches} />
+        Show targets matching a source
+      </label>
 
       <Settings bind:options onChange={recalculate} />
     {/if}
@@ -154,6 +161,7 @@
       style="https://api.maptiler.com/maps/dataviz/style.json?key=MZEJTanw3WpxRvt7qDfo"
       standardControls
       bind:map
+      hash
       on:error={(e) => {
         // @ts-ignore ErrorEvent isn't exported
         console.log(e.detail.error);
@@ -178,6 +186,9 @@
       <GeoJSON data={targetGj}>
         <LineLayer
           manageHoverState
+          filter={showTargetsWithMatches
+            ? undefined
+            : ["!", ["get", "has_match"]]}
           paint={{
             "line-width": 8,
             "line-color": targetColor,
