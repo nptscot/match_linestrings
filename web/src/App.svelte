@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { bboxPolygon } from "@turf/bbox-polygon";
+  import { booleanIntersects } from "@turf/boolean-intersects";
   import { onMount } from "svelte";
   import "@picocss/pico/css/pico.jade.min.css";
   import type { Map } from "maplibre-gl";
@@ -7,9 +9,11 @@
     MapLibre,
     LineLayer,
     hoverStateFilter,
+    type LayerClickInfo,
   } from "svelte-maplibre";
   import { Layout } from "svelte-utils/two_column_layout";
   import { emptyGeojson, bbox } from "svelte-utils/map";
+  import { downloadGeneratedFile } from "svelte-utils";
   import type { Feature, FeatureCollection } from "geojson";
   import init, { matchLineStrings } from "backend";
   import Settings from "./Settings.svelte";
@@ -119,6 +123,48 @@
     [sourceGj, targetGj] = [targetGj, sourceGj];
     recalculate();
   }
+
+  function removeProperties(f: Feature): Feature {
+    let copy = JSON.parse(JSON.stringify(f));
+    delete copy.properties;
+    return copy;
+  }
+
+  function resetIDs(features: Feature[]): Feature[] {
+    let id = 0;
+    for (let f of features) {
+      f.id = id++;
+    }
+    return features;
+  }
+
+  function generateTestCase(e: CustomEvent<LayerClickInfo>) {
+    let clickedTarget = targetGj.features[e.detail.features[0].id as number];
+    let box = bboxPolygon(bbox(clickedTarget));
+
+    downloadGeneratedFile(
+      "sources.geojson",
+      JSON.stringify({
+        type: "FeatureCollection",
+        features: resetIDs(
+          sourceGj.features
+            .filter((f) => booleanIntersects(f, box))
+            .map(removeProperties),
+        ),
+      }),
+    );
+    downloadGeneratedFile(
+      "targets.geojson",
+      JSON.stringify({
+        type: "FeatureCollection",
+        features: resetIDs(
+          targetGj.features
+            .filter((f) => booleanIntersects(f, box))
+            .map(removeProperties),
+        ),
+      }),
+    );
+  }
 </script>
 
 <Layout>
@@ -198,6 +244,7 @@
             ),
           }}
           bind:hovered={hoveredTarget}
+          on:click={generateTestCase}
         />
       </GeoJSON>
     </MapLibre>

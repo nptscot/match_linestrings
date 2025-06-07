@@ -26,7 +26,17 @@ pub fn match_linestrings(
     });
 
     let options: match_linestrings::Options = serde_wasm_bindgen::from_value(raw_options)?;
+    let (source_rtree, targets) = prepare_input(source_gj, target_gj)?;
 
+    let out: Vec<match_linestrings::TargetMatches<usize>> =
+        match_linestrings::match_linestrings(&source_rtree, targets.iter(), &options);
+    serde_json::to_string(&out).map_err(err_to_js)
+}
+
+fn prepare_input(
+    source_gj: String,
+    target_gj: String,
+) -> Result<(RTree<GeomWithData<LineString, usize>>, Vec<LineString>), JsValue> {
     let mut sources: Vec<Input> =
         geojson::de::deserialize_feature_collection_str_to_vec(&source_gj).map_err(err_to_js)?;
     let mut targets: Vec<Input> =
@@ -55,12 +65,10 @@ pub fn match_linestrings(
             .collect(),
     );
 
-    let out: Vec<match_linestrings::TargetMatches<usize>> = match_linestrings::match_linestrings(
-        &source_rtree,
-        targets.iter().map(|x| &x.geometry),
-        &options,
-    );
-    serde_json::to_string(&out).map_err(err_to_js)
+    Ok((
+        source_rtree,
+        targets.into_iter().map(|x| x.geometry).collect(),
+    ))
 }
 
 #[derive(Deserialize)]
