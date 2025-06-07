@@ -1,1 +1,1 @@
-Some data is derived from OpenStreetMap.
+Most data is derived from OpenStreetMap.
