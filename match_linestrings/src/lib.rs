@@ -4,35 +4,42 @@ use rstar::{primitives::GeomWithData, RTree, RTreeObject, AABB};
 use serde::{Deserialize, Serialize};
 use utils::{LineSplit, Mercator};
 
-/// For every target LineString, look for the best matching source LineString and return its
-/// associated data. The sources are stored in the `rtree`. All geometry must be Euclidean.
+/// For every target LineString, look for all matching source LineStrings. The sources are stored
+/// in the `rtree`. All geometry must be Euclidean.
 pub fn match_linestrings<'a, T: Copy>(
     rtree: &RTree<GeomWithData<LineString, T>>,
     targets: impl Iterator<Item = &'a LineString>,
     opts: &Options,
-) -> Vec<Option<T>> {
+) -> Vec<TargetMatches<T>> {
     let mut output = Vec::new();
     for target in targets {
-        let candidates = rtree
+        let mut matching_sources = Vec::new();
+        for candidate in rtree
             .locate_in_envelope_intersecting(&buffer_aabb(target.envelope(), opts.buffer_meters))
-            .collect::<Vec<_>>();
-        // TODO If there are multiple hits, pick the best
-        let best_hit = candidates
-            .iter()
-            .find(|obj| {
-                slice_line_to_match(obj.geom(), target)
-                    .map(|small| opts.accept(target, &small))
-                    .unwrap_or(false)
-            })
-            .map(|obj| obj.data);
-
-        output.push(best_hit);
+        {
+            if let Some((smaller_source, smaller_target)) =
+                slice_lines_to_match(candidate.geom(), target)
+            {
+                if opts.accept(&smaller_target, &smaller_source) {
+                    matching_sources.push(candidate.data);
+                }
+            }
+        }
+        output.push(TargetMatches { matching_sources });
     }
     output
 }
 
+/// For one target, record all of the matching sources.
+#[derive(Serialize)]
+pub struct TargetMatches<T: Copy> {
+    pub matching_sources: Vec<T>,
+    // TODO Plumb along CompareLineStrings debug too?
+}
+
 /// Same as `match_linestrings`, but for every target with no successful matches, write some
 /// GeoJSON output to manually debug.
+// TODO Rethink this -- do it in the web API, plumbing CompareLineStrings back.
 pub fn debug_match_linestrings<'a, T: Copy>(
     rtree: &RTree<GeomWithData<LineString, T>>,
     targets: impl Iterator<Item = &'a LineString>,
@@ -210,12 +217,26 @@ fn buffer_aabb(aabb: AABB<Point>, buffer_meters: f64) -> AABB<Point> {
     )
 }
 
-// Slice `source` to correspond to `target`, by finding the closest point along `source` matching
-// `target`'s start and end point.
-fn slice_line_to_match(source: &LineString, target: &LineString) -> Option<LineString> {
-    let start = source.line_locate_point(&target.points().next().unwrap())?;
-    let end = source.line_locate_point(&target.points().last().unwrap())?;
+// Slice `a` to correspond to `b`, by finding the closest point along `a` matching `b`'s start and
+// end point.
+fn slice_line_to_match(a: &LineString, b: &LineString) -> Option<LineString> {
+    let start = a.line_locate_point(&b.points().next().unwrap())?;
+    let end = a.line_locate_point(&b.points().last().unwrap())?;
     // Note this uses a copy of an API that hasn't been merged into georust yet. It seems to work
     // fine in practice.
-    source.line_split_twice(start, end)?.into_second()
+    a.line_split_twice(start, end)?.into_second()
+}
+
+// TODO Diagram of example cases would help
+fn slice_lines_to_match(
+    source: &LineString,
+    target: &LineString,
+) -> Option<(LineString, LineString)> {
+    if Euclidean.length(source) >= Euclidean.length(target) {
+        let smaller_source = slice_line_to_match(source, target)?;
+        return Some((smaller_source, target.clone()));
+    }
+
+    let smaller_target = slice_line_to_match(target, source)?;
+    Some((source.clone(), smaller_target))
 }

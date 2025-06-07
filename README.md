@@ -29,6 +29,8 @@ The approach is inspired by https://github.com/nptscot/rnetmatch.
 
 For each target linestring:
 
+TODO: Now outdated with multiple sources per target
+
 -  Calculate the AABB around the target, then buffer it by some amount (Otherwise, sources slightly away might be skipped entirely)
 -  Use an r-tree to find all source candidates in that AABB
 -  Slice the candidate to match up with the target better. Find the closest point on the source to the target's start and endpoint, then slice in between them

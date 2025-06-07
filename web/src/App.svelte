@@ -30,13 +30,18 @@
     midpt_dist_threshold: 15.0,
   };
 
-  let matches: [number | null][] = [];
+  interface TargetMatches {
+    // Indices of sources matching this target
+    matching_sources: number[];
+  }
+  let matches: TargetMatches[] = [];
 
   onMount(async () => {
     await init();
   });
 
-  $: matchSourceIdx = hoveredTarget == null ? null : matches[hoveredTarget.id];
+  $: matchingSourceIndices =
+    hoveredTarget == null ? [] : matches[hoveredTarget.id as number].matching_sources;
 
   function recalculate() {
     try {
@@ -54,7 +59,7 @@
 
     // Modify targetGj, so we can style based on matches
     for (let [idx, f] of targetGj.features.entries()) {
-      f.properties.has_match = matches[idx] != null;
+      f.properties!.has_match = matches[idx].matching_sources.length > 0;
     }
     targetGj = targetGj;
   }
@@ -136,7 +141,7 @@
       <div style:background={targetColor}>Target</div>
       <p>
         {targetGj.features.length} targets, with {matches.filter(
-          (x) => x != null,
+          (x) => x.matching_sources.length > 0,
         ).length} matching a source
       </p>
 
@@ -158,7 +163,12 @@
         <LineLayer
           manageHoverState
           paint={{
-            "line-width": ["case", ["==", ["id"], matchSourceIdx ?? -1], 8, 5],
+            "line-width": [
+              "case",
+              ["in", ["id"], ["literal", matchingSourceIndices]],
+              8,
+              5,
+            ],
             "line-color": sourceColor,
             "line-opacity": hoverStateFilter(0.5, 1.0),
           }}

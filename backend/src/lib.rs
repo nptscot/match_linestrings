@@ -11,8 +11,8 @@ use utils::Mercator;
 
 static START: Once = Once::new();
 
-/// Takes two GeoJSONs, matches LineStrings, and returns the optional index of the best matching
-/// feature for each target.
+/// Takes two GeoJSONs, matches LineStrings, and returns the indices of all matching
+/// sources for each target.
 #[wasm_bindgen(js_name = matchLineStrings)]
 pub fn match_linestrings(
     source_gj: String,
@@ -55,7 +55,7 @@ pub fn match_linestrings(
             .collect(),
     );
 
-    let out = match_linestrings::match_linestrings(
+    let out: Vec<match_linestrings::TargetMatches<usize>> = match_linestrings::match_linestrings(
         &source_rtree,
         targets.iter().map(|x| &x.geometry),
         &options,
