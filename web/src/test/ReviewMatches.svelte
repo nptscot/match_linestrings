@@ -43,7 +43,7 @@
   let matches: TargetMatches[] = [];
 
   $: numReviewed = targetGj.features.filter(
-    (f) => f.properties.reviewed != "",
+    (f) => f.properties.reviewed != "unreviewed",
   ).length;
 
   onMount(async () => {
@@ -77,7 +77,7 @@
     // Modify targetGj, so we can style based on matches and mark results
     for (let [idx, f] of targetGj.features.entries()) {
       f.properties.has_match = matches[idx].matching_sources.length > 0;
-      f.properties.reviewed ??= "";
+      f.properties.reviewed ??= "unreviewed";
     }
     targetGj = targetGj;
   }
@@ -147,6 +147,19 @@
   function onMapClick(e: CustomEvent<MapMouseEvent>) {
     clickedTarget = null;
   }
+
+  function gotoNext() {
+    for (let f of targetGj.features) {
+      if (f.properties.reviewed == "unreviewed") {
+        map?.fitBounds(bbox(f), {
+          animate: false,
+          padding: 200,
+        });
+        clickedTarget = f.id as number;
+        return;
+      }
+    }
+  }
 </script>
 
 <Layout>
@@ -183,7 +196,9 @@
         {numReviewed} / {targetGj.features.length} targets reviewed
       </ProgressBar>
 
-      {#if clickedTarget != null}
+      {#if clickedTarget == null}
+        <button on:click={gotoNext}>Goto next unreviewed</button>
+      {:else}
         <Form {clickedTarget} {targetGj} {matchingSourceIndices} {onConfirm} />
       {/if}
     {/if}
@@ -227,7 +242,13 @@
           manageHoverState
           paint={{
             "line-width": 8,
-            "line-color": ["match", ["get", "reviewed"], "", "red", "blue"],
+            "line-color": [
+              "match",
+              ["get", "reviewed"],
+              "unreviewed",
+              "red",
+              "blue",
+            ],
             "line-opacity": [
               "case",
               ["==", ["id"], clickedTarget ?? -1],

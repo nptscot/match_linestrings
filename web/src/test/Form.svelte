@@ -25,9 +25,9 @@
   }
 </script>
 
-<p>Target {clickedTarget}: {initialValue || "unreviewed"}</p>
+<p>Target {clickedTarget}: {initialValue}</p>
 
-<button on:click={() => onConfirm("")}>Mark unreviewed</button>
+<button on:click={() => onConfirm("unreviewed")}>Mark unreviewed</button>
 
 <button on:click={() => onConfirm("not sure")}>Not sure</button>
 
