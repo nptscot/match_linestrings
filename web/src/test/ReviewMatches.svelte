@@ -1,28 +1,33 @@
 <script lang="ts">
+  import type { TargetGJ, Reviewed } from "./";
   import { onMount } from "svelte";
   import "@picocss/pico/css/pico.jade.min.css";
-  import type { Map } from "maplibre-gl";
+  import type { Map, MapMouseEvent } from "maplibre-gl";
   import {
     GeoJSON,
     MapLibre,
     LineLayer,
     hoverStateFilter,
+    MapEvents,
     Popup,
-    type LayerClickInfo,
   } from "svelte-maplibre";
   import { Layout } from "svelte-utils/two_column_layout";
   import { emptyGeojson, bbox } from "svelte-utils/map";
   import { notNull, downloadGeneratedFile } from "svelte-utils";
-  import type { Feature, FeatureCollection } from "geojson";
+  import type { FeatureCollection } from "geojson";
   import init, { matchLineStrings } from "backend";
   import Settings from "../Settings.svelte";
+  import ProgressBar from "./ProgressBar.svelte";
+  import Form from "./Form.svelte";
 
   let map: Map | undefined;
 
   let sourceGj = emptyGeojson();
 
-  let targetGj = emptyGeojson();
-  let hoveredTarget: Feature | null = null;
+  let targetGj: TargetGJ = emptyGeojson() as TargetGJ;
+  let clickedTarget: number | null = null;
+  $: matchingSourceIndices =
+    clickedTarget == null ? [] : matches[clickedTarget].matching_sources;
 
   let options = {
     buffer_meters: 20.0,
@@ -37,23 +42,23 @@
   }
   let matches: TargetMatches[] = [];
 
+  $: numReviewed = targetGj.features.filter(
+    (f) => f.properties.reviewed != "",
+  ).length;
+
   onMount(async () => {
     await init();
 
     // Quick local development
     if (true) {
       sourceGj = fixInput(await (await fetch("/sources.geojson")).json());
+      // @ts-expect-error
       targetGj = fixInput(await (await fetch("/targets.geojson")).json());
       zoomFit();
-      hoveredTarget = null;
+      clickedTarget = null;
       recalculate();
     }
   });
-
-  $: matchingSourceIndices =
-    hoveredTarget == null
-      ? []
-      : matches[hoveredTarget.id as number].matching_sources;
 
   function recalculate() {
     try {
@@ -71,7 +76,8 @@
 
     // Modify targetGj, so we can style based on matches and mark results
     for (let [idx, f] of targetGj.features.entries()) {
-      f.properties!.has_match = matches[idx].matching_sources.length > 0;
+      f.properties.has_match = matches[idx].matching_sources.length > 0;
+      f.properties.reviewed ??= "";
     }
     targetGj = targetGj;
   }
@@ -91,9 +97,10 @@
       let input1 = await fileInput.files[0].text();
       let input2 = await fileInput.files[1].text();
       sourceGj = fixInput(JSON.parse(input1));
+      // @ts-expect-error
       targetGj = fixInput(JSON.parse(input2));
       zoomFit();
-      hoveredTarget = null;
+      clickedTarget = null;
       recalculate();
     } catch (err) {
       window.alert(`Bad input file: ${err}`);
@@ -112,6 +119,7 @@
   }
 
   function swap() {
+    // @ts-expect-error TODO Actually do remove from sources
     [sourceGj, targetGj] = [targetGj, sourceGj];
     recalculate();
   }
@@ -125,6 +133,19 @@
       f.properties ??= {};
     }
     return gj;
+  }
+
+  function onConfirm(value: Reviewed) {
+    if (clickedTarget == null) {
+      throw new Error("impossible");
+    }
+    targetGj.features[clickedTarget].properties.reviewed = value;
+    targetGj = targetGj;
+    clickedTarget = null;
+  }
+
+  function onMapClick(e: CustomEvent<MapMouseEvent>) {
+    clickedTarget = null;
   }
 </script>
 
@@ -153,6 +174,18 @@
       </p>
 
       <Settings bind:options onChange={recalculate} open={false} />
+
+      <ProgressBar
+        color="blue"
+        items={numReviewed}
+        total={targetGj.features.length}
+      >
+        {numReviewed} / {targetGj.features.length} targets reviewed
+      </ProgressBar>
+
+      {#if clickedTarget != null}
+        <Form {clickedTarget} {targetGj} {matchingSourceIndices} {onConfirm} />
+      {/if}
     {/if}
   </div>
 
@@ -167,6 +200,8 @@
         console.log(e.detail.error);
       }}
     >
+      <MapEvents on:click={onMapClick} />
+
       <GeoJSON data={sourceGj}>
         <LineLayer
           manageHoverState
@@ -192,13 +227,20 @@
           manageHoverState
           paint={{
             "line-width": 8,
-            "line-color": "red",
-            "line-opacity": hoverStateFilter(
-              ["case", ["get", "has_match"], 0.5, 0.2],
+            "line-color": ["match", ["get", "reviewed"], "", "red", "blue"],
+            "line-opacity": [
+              "case",
+              ["==", ["id"], clickedTarget ?? -1],
               1.0,
-            ),
+              ["boolean", ["feature-state", "hover"], false],
+              0.6,
+              ["get", "has_match"],
+              0.5,
+              0.2,
+            ],
           }}
-          bind:hovered={hoveredTarget}
+          hoverCursor="pointer"
+          on:click={(e) => (clickedTarget = e.detail.features[0].id)}
         >
           <Popup openOn="hover" let:data>
             Target {notNull(data).id} matches {JSON.stringify(
