@@ -160,7 +160,19 @@
       }
     }
   }
+
+  function onKeyDown(e: KeyboardEvent) {
+    if ((e.target as HTMLElement).tagName == "INPUT") {
+      return;
+    }
+
+    if (e.key == "n") {
+      gotoNext();
+    }
+  }
 </script>
+
+<svelte:window on:keydown={onKeyDown} />
 
 <Layout>
   <div slot="left">
@@ -195,12 +207,6 @@
       >
         {numReviewed} / {targetGj.features.length} targets reviewed
       </ProgressBar>
-
-      {#if clickedTarget == null}
-        <button on:click={gotoNext}>Goto next unreviewed</button>
-      {:else}
-        <Form {clickedTarget} {targetGj} {matchingSourceIndices} {onConfirm} />
-      {/if}
     {/if}
   </div>
 
@@ -216,6 +222,22 @@
       }}
     >
       <MapEvents on:click={onMapClick} />
+
+      <div class="map-panel">
+        {#if clickedTarget == null}
+          <button on:click={gotoNext}>
+            Goto <kbd>n</kbd>
+            ext unreviewed
+          </button>
+        {:else}
+          <Form
+            {clickedTarget}
+            {targetGj}
+            {matchingSourceIndices}
+            {onConfirm}
+          />
+        {/if}
+      </div>
 
       <GeoJSON data={sourceGj}>
         <LineLayer
@@ -273,3 +295,15 @@
     </MapLibre>
   </div>
 </Layout>
+
+<style>
+  .map-panel {
+    position: absolute;
+    top: 10px;
+    left: 10%;
+    right: 10%;
+
+    background: grey;
+    padding: 8px;
+  }
+</style>

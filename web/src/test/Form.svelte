@@ -23,15 +23,51 @@
       window.alert("Not a list of source IDs");
     }
   }
+
+  function onKeyDown(e: KeyboardEvent) {
+    if ((e.target as HTMLElement).tagName == "INPUT") {
+      return;
+    }
+
+    if (e.key == "1") {
+      onConfirm("unreviewed");
+    } else if (e.key == "2") {
+      onConfirm("not sure");
+    } else if (e.key == "3") {
+      onConfirm([]);
+    } else if (e.key == "4") {
+      parseMatches();
+    }
+  }
 </script>
 
-<p>Target {clickedTarget}: {initialValue}</p>
+<svelte:window on:keydown={onKeyDown} />
 
-<button on:click={() => onConfirm("unreviewed")}>Mark unreviewed</button>
+<h3>Target {clickedTarget}: {initialValue}</h3>
 
-<button on:click={() => onConfirm("not sure")}>Not sure</button>
+<div style="display: flex; justify-content: space-between;">
+  <button on:click={() => onConfirm("unreviewed")}>
+    <kbd>1</kbd>
+    - Unreviewed
+  </button>
 
-<button on:click={() => onConfirm([])}>No matches</button>
+  <button on:click={() => onConfirm("not sure")}>
+    <kbd>2</kbd>
+    - Not sure
+  </button>
 
-<input type="text" bind:value={rawList} />
-<button on:click={parseMatches}>Matches these sources</button>
+  <button on:click={() => onConfirm([])}>
+    <kbd>3</kbd>
+    - No matches
+  </button>
+
+  <div>
+    <div>
+      <button on:click={parseMatches}>
+        <kbd>4</kbd>
+        - These sources
+      </button>
+    </div>
+    <input type="text" bind:value={rawList} style:width="50%" />
+  </div>
+</div>
