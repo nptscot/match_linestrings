@@ -1,9 +1,10 @@
 <script lang="ts">
   export let options: any;
   export let onChange: () => void;
+  export let open: boolean;
 </script>
 
-<details open>
+<details {open}>
   <summary>Config</summary>
 
   <label>

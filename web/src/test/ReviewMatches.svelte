@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { bboxPolygon } from "@turf/bbox-polygon";
-  import { booleanIntersects } from "@turf/boolean-intersects";
   import { onMount } from "svelte";
   import "@picocss/pico/css/pico.jade.min.css";
   import type { Map } from "maplibre-gl";
@@ -9,24 +7,22 @@
     MapLibre,
     LineLayer,
     hoverStateFilter,
+    Popup,
     type LayerClickInfo,
   } from "svelte-maplibre";
   import { Layout } from "svelte-utils/two_column_layout";
   import { emptyGeojson, bbox } from "svelte-utils/map";
-  import { downloadGeneratedFile } from "svelte-utils";
+  import { notNull, downloadGeneratedFile } from "svelte-utils";
   import type { Feature, FeatureCollection } from "geojson";
   import init, { matchLineStrings } from "backend";
-  import Settings from "./Settings.svelte";
+  import Settings from "../Settings.svelte";
 
   let map: Map | undefined;
 
   let sourceGj = emptyGeojson();
-  let sourceColor = "red";
 
   let targetGj = emptyGeojson();
-  let targetColor = "blue";
   let hoveredTarget: Feature | null = null;
-  let showTargetsWithMatches = true;
 
   let options = {
     buffer_meters: 20.0,
@@ -43,6 +39,15 @@
 
   onMount(async () => {
     await init();
+
+    // Quick local development
+    if (true) {
+      sourceGj = fixInput(await (await fetch("/sources.geojson")).json());
+      targetGj = fixInput(await (await fetch("/targets.geojson")).json());
+      zoomFit();
+      hoveredTarget = null;
+      recalculate();
+    }
   });
 
   $: matchingSourceIndices =
@@ -64,7 +69,7 @@
       return;
     }
 
-    // Modify targetGj, so we can style based on matches
+    // Modify targetGj, so we can style based on matches and mark results
     for (let [idx, f] of targetGj.features.entries()) {
       f.properties!.has_match = matches[idx].matching_sources.length > 0;
     }
@@ -83,29 +88,16 @@
     }
 
     try {
-      sourceGj = await loadFile(fileInput.files[0]);
-      targetGj = await loadFile(fileInput.files[1]);
+      let input1 = await fileInput.files[0].text();
+      let input2 = await fileInput.files[1].text();
+      sourceGj = fixInput(JSON.parse(input1));
+      targetGj = fixInput(JSON.parse(input2));
       zoomFit();
       hoveredTarget = null;
       recalculate();
     } catch (err) {
       window.alert(`Bad input file: ${err}`);
     }
-  }
-
-  async function loadFile(file: File): Promise<FeatureCollection> {
-    let text = await file.text();
-    let gj = JSON.parse(text);
-
-    // Overwrite feature IDs
-    let id = 0;
-    for (let f of gj.features) {
-      f.id = id++;
-      // Make sure properties aren't null
-      f.properties ??= {};
-    }
-
-    return gj;
   }
 
   function zoomFit() {
@@ -124,52 +116,21 @@
     recalculate();
   }
 
-  function removeProperties(f: Feature): Feature {
-    let copy = JSON.parse(JSON.stringify(f));
-    delete copy.properties;
-    return copy;
-  }
-
-  function resetIDs(features: Feature[]): Feature[] {
+  function fixInput(gj: FeatureCollection): FeatureCollection {
+    // Overwrite feature IDs
     let id = 0;
-    for (let f of features) {
+    for (let f of gj.features) {
       f.id = id++;
+      // Make sure properties aren't null
+      f.properties ??= {};
     }
-    return features;
-  }
-
-  function generateTestCase(e: CustomEvent<LayerClickInfo>) {
-    let clickedTarget = targetGj.features[e.detail.features[0].id as number];
-    let box = bboxPolygon(bbox(clickedTarget));
-
-    downloadGeneratedFile(
-      "sources.geojson",
-      JSON.stringify({
-        type: "FeatureCollection",
-        features: resetIDs(
-          sourceGj.features
-            .filter((f) => booleanIntersects(f, box))
-            .map(removeProperties),
-        ),
-      }),
-    );
-    downloadGeneratedFile(
-      "targets.geojson",
-      JSON.stringify({
-        type: "FeatureCollection",
-        features: resetIDs(
-          targetGj.features
-            .filter((f) => booleanIntersects(f, box))
-            .map(removeProperties),
-        ),
-      }),
-    );
+    return gj;
   }
 </script>
 
 <Layout>
   <div slot="left">
-    <h1>Match LineStrings</h1>
+    <h1>Match LineStrings - review results to make test cases</h1>
 
     <label>
       Load two .geojson files
@@ -177,28 +138,21 @@
     </label>
 
     {#if sourceGj.features.length > 0}
+      <div style="display: flex; justify-content: space-between;">
+        <button class="secondary" on:click={swap}>Swap</button>
+        <button class="secondary" on:click={zoomFit}>Zoom to fit</button>
+      </div>
+
       <hr />
 
-      <div>
-        <button on:click={swap}>Swap</button>
-      </div>
-      <div><button on:click={zoomFit}>Zoom to fit</button></div>
-
-      <div style:background={sourceColor}>Sources</div>
-      <p>{sourceGj.features.length} sources</p>
-
-      <div style:background={targetColor}>Target</div>
       <p>
-        {targetGj.features.length} targets, with {matches.filter(
-          (x) => x.matching_sources.length > 0,
-        ).length} matching a source
+        {sourceGj.features.length} sources and
+        <span style="color: red">{targetGj.features.length} targets</span>
+        , with {matches.filter((x) => x.matching_sources.length > 0).length} matching
+        a source
       </p>
-      <label>
-        <input type="checkbox" bind:checked={showTargetsWithMatches} />
-        Show targets matching a source
-      </label>
 
-      <Settings bind:options onChange={recalculate} open />
+      <Settings bind:options onChange={recalculate} open={false} />
     {/if}
   </div>
 
@@ -223,29 +177,35 @@
               8,
               5,
             ],
-            "line-color": sourceColor,
+            "line-color": "black",
             "line-opacity": hoverStateFilter(0.5, 1.0),
           }}
-        />
+        >
+          <Popup openOn="hover" let:data>
+            Source {notNull(data).id}
+          </Popup>
+        </LineLayer>
       </GeoJSON>
 
       <GeoJSON data={targetGj}>
         <LineLayer
           manageHoverState
-          filter={showTargetsWithMatches
-            ? undefined
-            : ["!", ["get", "has_match"]]}
           paint={{
             "line-width": 8,
-            "line-color": targetColor,
+            "line-color": "red",
             "line-opacity": hoverStateFilter(
               ["case", ["get", "has_match"], 0.5, 0.2],
               1.0,
             ),
           }}
           bind:hovered={hoveredTarget}
-          on:click={generateTestCase}
-        />
+        >
+          <Popup openOn="hover" let:data>
+            Target {notNull(data).id} matches {JSON.stringify(
+              matchingSourceIndices,
+            )}
+          </Popup>
+        </LineLayer>
       </GeoJSON>
     </MapLibre>
   </div>
