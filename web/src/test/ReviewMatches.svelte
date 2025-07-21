@@ -91,7 +91,7 @@
     for (let f of copy.features) {
       delete f.properties.has_match;
     }
-    downloadGeneratedFile("targets.geojson", JSON.stringify(copy));
+    downloadGeneratedFile("reviewed_targets.geojson", JSON.stringify(copy));
   }
 
   function backToSetup() {
