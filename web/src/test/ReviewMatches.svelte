@@ -17,7 +17,6 @@
   import type { FeatureCollection } from "geojson";
   import init, { matchLineStrings } from "backend";
   import Settings from "../Settings.svelte";
-  import ProgressBar from "./ProgressBar.svelte";
   import Form from "./Form.svelte";
 
   let map: Map | undefined;
@@ -152,7 +151,8 @@
     for (let f of targetGj.features) {
       if (f.properties.reviewed == "unreviewed") {
         map?.fitBounds(bbox(f), {
-          animate: false,
+          duration: 600,
+          // TODO Can't get per-edge to work
           padding: 200,
         });
         clickedTarget = f.id as number;
@@ -170,6 +170,14 @@
       gotoNext();
     }
   }
+
+  function downloadReviewed() {
+    let copy = JSON.parse(JSON.stringify(targetGj));
+    for (let f of copy.features) {
+      delete f.properties.has_match;
+    }
+    downloadGeneratedFile("targets.geojson", JSON.stringify(copy));
+  }
 </script>
 
 <svelte:window on:keydown={onKeyDown} />
@@ -178,35 +186,39 @@
   <div slot="left">
     <h1>Match LineStrings - review results to make test cases</h1>
 
-    <label>
-      Load two .geojson files
-      <input bind:this={fileInput} on:change={loadFiles} type="file" multiple />
-    </label>
+    <details open>
+      <summary>Setup</summary>
+      <label>
+        Load two .geojson files
+        <input
+          bind:this={fileInput}
+          on:change={loadFiles}
+          type="file"
+          multiple
+        />
+      </label>
+
+      {#if sourceGj.features.length > 0}
+        <div style="display: flex; justify-content: space-between;">
+          <button class="secondary" on:click={swap}>Swap</button>
+          <button class="secondary" on:click={zoomFit}>Zoom to fit</button>
+        </div>
+
+        <p>
+          {sourceGj.features.length} sources and
+          <span style="color: red">{targetGj.features.length} targets</span>
+          , with {matches.filter((x) => x.matching_sources.length > 0).length} matching
+          a source
+        </p>
+
+        <Settings bind:options onChange={recalculate} open={false} />
+      {/if}
+    </details>
 
     {#if sourceGj.features.length > 0}
-      <div style="display: flex; justify-content: space-between;">
-        <button class="secondary" on:click={swap}>Swap</button>
-        <button class="secondary" on:click={zoomFit}>Zoom to fit</button>
-      </div>
-
-      <hr />
-
-      <p>
-        {sourceGj.features.length} sources and
-        <span style="color: red">{targetGj.features.length} targets</span>
-        , with {matches.filter((x) => x.matching_sources.length > 0).length} matching
-        a source
-      </p>
-
-      <Settings bind:options onChange={recalculate} open={false} />
-
-      <ProgressBar
-        color="blue"
-        items={numReviewed}
-        total={targetGj.features.length}
-      >
-        {numReviewed} / {targetGj.features.length} targets reviewed
-      </ProgressBar>
+      <progress value={numReviewed} max={targetGj.features.length} />
+      <p>{numReviewed} / {targetGj.features.length} targets reviewed</p>
+      <button on:click={downloadReviewed}>Download reviews</button>
     {/if}
   </div>
 
@@ -284,13 +296,7 @@
           }}
           hoverCursor="pointer"
           on:click={(e) => (clickedTarget = e.detail.features[0].id)}
-        >
-          <Popup openOn="hover" let:data>
-            Target {notNull(data).id} matches {JSON.stringify(
-              matchingSourceIndices,
-            )}
-          </Popup>
-        </LineLayer>
+        />
       </GeoJSON>
     </MapLibre>
   </div>
