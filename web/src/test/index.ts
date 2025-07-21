@@ -5,3 +5,8 @@ export type TargetGJ = FeatureCollection<
   LineString,
   { has_match: boolean; reviewed: Reviewed }
 >;
+
+export interface TargetMatches {
+  // Indices of sources matching this target
+  matching_sources: number[];
+}

@@ -3,4 +3,3 @@ target
 node_modules
 
 cli/output.geojson
-web/public/

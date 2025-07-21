@@ -198,7 +198,7 @@
         Show targets matching a source
       </label>
 
-      <Settings bind:options onChange={recalculate} open />
+      <Settings bind:options onChange={recalculate} />
     {/if}
   </div>
 
