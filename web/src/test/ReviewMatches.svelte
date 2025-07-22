@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TargetGJ, Reviewed } from "./";
+  import { autosaveKey, type TargetGJ, type Reviewed } from "./";
   import { onMount } from "svelte";
   import "@picocss/pico/css/pico.jade.min.css";
   import type { Map, MapMouseEvent } from "maplibre-gl";
@@ -37,7 +37,27 @@
 
   onMount(async () => {
     await init();
+
+    try {
+      let restore = window.localStorage.getItem(autosaveKey);
+      if (restore) {
+        let json = JSON.parse(restore);
+        [sourceGj, targetGj] = json;
+        setupDone = true;
+        console.log(`Restored data from local storage ${autosaveKey}`);
+      }
+    } catch (err) {
+      console.log(`Couldn't restore data from local storage: ${err}`);
+    }
   });
+
+  $: if (setupDone) {
+    console.log(`Autosaving with ${numReviewed} reviewed targets`);
+    window.localStorage.setItem(
+      autosaveKey,
+      JSON.stringify([sourceGj, targetGj]),
+    );
+  }
 
   function zoomFit() {
     let gj = {

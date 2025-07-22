@@ -5,3 +5,5 @@ export type TargetGJ = FeatureCollection<
   LineString,
   { matching_sources: number[]; reviewed: Reviewed }
 >;
+
+export let autosaveKey = "match-linestrings-review";
