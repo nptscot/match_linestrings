@@ -150,7 +150,7 @@
     <div>
       <a
         class="icon-link mb-3"
-        href="https://github.com/nptscot/match_linestrings/blob/main/test_cases.md"
+        href="https://github.com/nptscot/match_linestrings/blob/main/tests/README.md"
         target="_blank"
       >
         About <i class="fa-solid fa-arrow-up-right-from-square" />
