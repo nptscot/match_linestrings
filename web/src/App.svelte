@@ -2,7 +2,6 @@
   import { bboxPolygon } from "@turf/bbox-polygon";
   import { booleanIntersects } from "@turf/boolean-intersects";
   import { onMount } from "svelte";
-  import "@picocss/pico/css/pico.jade.min.css";
   import type { Map } from "maplibre-gl";
   import {
     GeoJSON,

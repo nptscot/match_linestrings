@@ -1,7 +1,6 @@
 <script lang="ts">
   import { autosaveKey, type TargetGJ, type Reviewed } from "./";
   import { onMount } from "svelte";
-  import "@picocss/pico/css/pico.jade.min.css";
   import type { Map } from "maplibre-gl";
   import {
     GeoJSON,
