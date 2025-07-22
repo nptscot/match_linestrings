@@ -116,6 +116,7 @@
     targetGj = emptyGeojson() as TargetGJ;
     setupDone = false;
     clickedTarget = null;
+    window.localStorage.removeItem(autosaveKey);
   }
 
   function onClickTarget(e: CustomEvent<LayerClickInfo>) {
