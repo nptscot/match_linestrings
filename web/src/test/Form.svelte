@@ -35,7 +35,7 @@
   </h3>
   <button class="btn btn-secondary" on:click={onCancel}>
     <kbd>Escape</kbd>
-     - Back
+    - Back
   </button>
 </div>
 

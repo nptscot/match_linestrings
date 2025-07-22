@@ -14,7 +14,11 @@
   } from "svelte-maplibre";
   import { Layout } from "svelte-utils/two_column_layout";
   import { emptyGeojson, bbox } from "svelte-utils/map";
-  import { notNull, downloadGeneratedFile } from "svelte-utils";
+  import {
+    notNull,
+    downloadGeneratedFile,
+    QualitativeLegend,
+  } from "svelte-utils";
   import init from "backend";
   import Form from "./Form.svelte";
   import SetupMode from "./SetupMode.svelte";
@@ -188,6 +192,22 @@
       <button class="btn btn-outline-success" on:click={downloadReviewed}>
         Download reviews
       </button>
+
+      <div class="card mt-5">
+        <div class="card-body">
+          <h5 class="card-title">Legend</h5>
+          <QualitativeLegend
+            itemsPerRow={1}
+            labelColors={{
+              Confirmed: "green",
+              "Not sure": "orange",
+              Unreviewed: "red",
+              Source: "grey",
+            }}
+          />
+          <p>Thinner lines have a match, thicker are off-road</p>
+        </div>
+      </div>
     {/if}
   </div>
 
