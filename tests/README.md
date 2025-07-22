@@ -41,3 +41,5 @@ Please send the original `sources.geojson` file and the new `reviewed_targets.ge
 ## Examples
 
 Most examples here contain OpenStreetMap data.
+
+See <https://github.com/nptscot/match_linestrings/tree/main/tests/braganza_street> and <https://github.com/nptscot/match_linestrings/tree/main/tests/chuchyard_row>.
