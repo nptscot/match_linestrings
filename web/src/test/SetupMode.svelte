@@ -9,6 +9,8 @@
   export let setupDone: boolean;
   export let zoomFit: () => void;
 
+  let alreadyHasMatching = false;
+
   let options = {
     buffer_meters: 20.0,
     angle_diff_threshold: 10.0,
@@ -17,6 +19,9 @@
   };
 
   function recalculate() {
+    if (alreadyHasMatching) {
+      return;
+    }
     try {
       let matches = JSON.parse(
         matchLineStrings(
@@ -53,6 +58,14 @@
       sourceGj = fixInput(JSON.parse(input1));
       // @ts-expect-error
       targetGj = fixInput(JSON.parse(input2));
+      if ("matching_sources" in targetGj.features[0].properties) {
+        alreadyHasMatching = true;
+      } else if ("matching_sources" in sourceGj.features[0].properties!) {
+        alreadyHasMatching = true;
+        // @ts-expect-error
+        [sourceGj, targetGj] = [targetGj, sourceGj];
+      }
+
       zoomFit();
       recalculate();
     } catch (err) {
@@ -90,7 +103,13 @@
 </label>
 
 {#if sourceGj.features.length > 0}
-  <button class="btn btn-secondary" on:click={swap}>Swap</button>
+  <button
+    class="btn btn-secondary"
+    on:click={swap}
+    disabled={alreadyHasMatching}
+  >
+    Swap
+  </button>
 
   <p>
     {sourceGj.features.length} sources and
@@ -104,5 +123,7 @@
     Start review
   </button>
 
-  <Settings bind:options onChange={recalculate} />
+  {#if !alreadyHasMatching}
+    <Settings bind:options onChange={recalculate} />
+  {/if}
 {/if}
