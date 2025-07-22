@@ -27,11 +27,17 @@
 
 <svelte:window on:keydown={onKeyDown} />
 
-<h3>
-  Target {clickedTarget}: {JSON.stringify(
-    targetGj.features[clickedTarget].properties.matching_sources,
-  )}
-</h3>
+<div style="display: flex; justify-content: space-between;">
+  <h3>
+    Target {clickedTarget}: {JSON.stringify(
+      targetGj.features[clickedTarget].properties.matching_sources,
+    )}
+  </h3>
+  <button class="btn btn-secondary" on:click={onCancel}>
+    <kbd>Escape</kbd>
+     - Back
+  </button>
+</div>
 
 <h6>Click sources to add or remove</h6>
 

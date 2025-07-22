@@ -252,7 +252,12 @@
         <LineLayer
           manageHoverState
           paint={{
-            "line-width": 8,
+            "line-width": [
+              "case",
+              [">", ["length", ["get", "matching_sources"]], 0],
+              8,
+              16,
+            ],
             "line-color": [
               "match",
               ["get", "reviewed"],
@@ -268,9 +273,7 @@
               1.0,
               ["boolean", ["feature-state", "hover"], false],
               0.6,
-              [">", ["length", ["get", "matching_sources"]], 0],
-              0.5,
-              0.2,
+              0.3,
             ],
           }}
           hoverCursor="pointer"
