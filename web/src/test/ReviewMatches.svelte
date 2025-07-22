@@ -8,7 +8,6 @@
     MapLibre,
     LineLayer,
     hoverStateFilter,
-    MapEvents,
     Popup,
     type LayerClickInfo,
   } from "svelte-maplibre";
@@ -79,10 +78,6 @@
     clickedTarget = null;
   }
 
-  function onMapClick(e: CustomEvent<MapMouseEvent>) {
-    clickedTarget = null;
-  }
-
   function gotoNext() {
     for (let f of targetGj.features) {
       if (f.properties.reviewed == "unreviewed") {
@@ -128,6 +123,20 @@
     }
     clickedTarget = e.detail.features[0].id as number;
   }
+
+  function onClickSource(e: CustomEvent<LayerClickInfo>) {
+    if (!setupDone || clickedTarget == null) {
+      return;
+    }
+    let id = e.detail.features[0].id as number;
+    let props = targetGj.features[clickedTarget].properties;
+    if (props.matching_sources.includes(id)) {
+      props.matching_sources = props.matching_sources.filter((x) => x != id);
+    } else {
+      props.matching_sources.push(id);
+    }
+    targetGj = targetGj;
+  }
 </script>
 
 <svelte:window on:keydown={onKeyDown} />
@@ -163,8 +172,6 @@
         console.log(e.detail.error);
       }}
     >
-      <MapEvents on:click={onMapClick} />
-
       {#if setupDone}
         <div class="map-panel">
           {#if clickedTarget == null}
@@ -173,12 +180,7 @@
               ext unreviewed
             </button>
           {:else}
-            <Form
-              {clickedTarget}
-              {targetGj}
-              {matchingSourceIndices}
-              {onConfirm}
-            />
+            <Form {clickedTarget} {targetGj} {onConfirm} />
           {/if}
         </div>
       {/if}
@@ -196,10 +198,18 @@
             "line-color": "black",
             "line-opacity": hoverStateFilter(0.5, 1.0),
           }}
+          hoverCursor={clickedTarget == null ? undefined : "pointer"}
+          on:click={onClickSource}
         >
-          <Popup openOn="hover" let:data>
-            Source {notNull(data).id}
-          </Popup>
+          {#if clickedTarget != null}
+            <Popup openOn="hover" let:data>
+              Source {notNull(data).id} -- click to {matchingSourceIndices.includes(
+                notNull(data).id,
+              )
+                ? "remove"
+                : "add"}
+            </Popup>
+          {/if}
         </LineLayer>
       </GeoJSON>
 

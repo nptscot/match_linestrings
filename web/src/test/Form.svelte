@@ -3,14 +3,15 @@
 
   export let clickedTarget: number;
   export let targetGj: TargetGJ;
-  export let matchingSourceIndices: number[];
   export let onConfirm: (value: Reviewed) => void;
 
   let initialValue = targetGj.features[clickedTarget].properties.reviewed;
 
   let rawList = Array.isArray(initialValue)
     ? JSON.stringify(initialValue)
-    : JSON.stringify(matchingSourceIndices);
+    : JSON.stringify(
+        targetGj.features[clickedTarget].properties.matching_sources,
+      );
 
   function parseMatches() {
     try {
