@@ -210,7 +210,12 @@
               ext unreviewed
             </button>
           {:else}
-            <Form {clickedTarget} {targetGj} {onConfirm} />
+            <Form
+              {clickedTarget}
+              {targetGj}
+              {onConfirm}
+              onCancel={() => (clickedTarget = null)}
+            />
           {/if}
         </div>
       {/if}

@@ -4,6 +4,9 @@
   export let clickedTarget: number;
   export let targetGj: TargetGJ;
   export let onConfirm: (value: Reviewed) => void;
+  export let onCancel: () => void;
+
+  $: currentValue = targetGj.features[clickedTarget].properties.reviewed;
 
   function onKeyDown(e: KeyboardEvent) {
     if ((e.target as HTMLElement).tagName == "INPUT") {
@@ -16,6 +19,8 @@
       onConfirm("not sure");
     } else if (e.key == "3") {
       onConfirm("confirmed");
+    } else if (e.key == "Escape") {
+      onCancel();
     }
   }
 </script>
@@ -31,18 +36,37 @@
 <h6>Click sources to add or remove</h6>
 
 <div style="display: flex; justify-content: space-between;">
-  <button class="btn btn-secondary" on:click={() => onConfirm("unreviewed")}>
+  <button
+    class="btn btn-secondary"
+    class:current={currentValue == "unreviewed"}
+    on:click={() => onConfirm("unreviewed")}
+  >
     <kbd>1</kbd>
     - Unreviewed
   </button>
 
-  <button class="btn btn-warning" on:click={() => onConfirm("not sure")}>
+  <button
+    class="btn btn-warning"
+    class:current={currentValue == "not sure"}
+    on:click={() => onConfirm("not sure")}
+  >
     <kbd>2</kbd>
     - Not sure
   </button>
 
-  <button class="btn btn-success" on:click={() => onConfirm("confirmed")}>
+  <button
+    class="btn btn-success"
+    class:current={currentValue == "confirmed"}
+    on:click={() => onConfirm("confirmed")}
+  >
     <kbd>3</kbd>
     - Confirm correct
   </button>
 </div>
+
+<style>
+  .current {
+    font-weight: bold;
+    border: 3px solid black;
+  }
+</style>
