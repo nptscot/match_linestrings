@@ -78,13 +78,19 @@
   }
 </script>
 
-<label>
+<label class="form-label">
   Load two .geojson files
-  <input bind:this={fileInput} on:change={loadFiles} type="file" multiple />
+  <input
+    class="form-control"
+    bind:this={fileInput}
+    on:change={loadFiles}
+    type="file"
+    multiple
+  />
 </label>
 
 {#if sourceGj.features.length > 0}
-  <button class="secondary" on:click={swap}>Swap</button>
+  <button class="btn btn-secondary" on:click={swap}>Swap</button>
 
   <p>
     {sourceGj.features.length} sources and
@@ -94,7 +100,9 @@
     ).length} matching a source
   </p>
 
-  <Settings bind:options onChange={recalculate} />
+  <button class="btn btn-primary mb-5" on:click={() => (setupDone = true)}>
+    Start review
+  </button>
 
-  <button on:click={() => (setupDone = true)}>Start review</button>
+  <Settings bind:options onChange={recalculate} />
 {/if}

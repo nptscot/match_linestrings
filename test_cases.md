@@ -32,7 +32,7 @@ Then you can use a small tool to initially create the matching and annotate the 
 1) Go to <https://nptscot.github.io/match_linestrings/review.html>
 2) Load the two GeoJSON files you want to match
 3) Press "Swap" if the red targets are not the cycleways
-4) Scroll down and press "Start review"
+4) Press "Start review"
 5) Review all targets. For each one, clicking sources to show they're matched or not, then confirming. For unclear cases, mark "not sure"
 6) Press "Download reviews"
 

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import "bootstrap/dist/css/bootstrap.min.css";
+  import "@fortawesome/fontawesome-free/css/all.min.css";
   import { autosaveKey, type TargetGJ, type Reviewed } from "./";
   import { onMount } from "svelte";
   import type { Map } from "maplibre-gl";
@@ -142,21 +144,49 @@
 
 <Layout>
   <div slot="left">
-    <h1>Match LineStrings - review results to make test cases</h1>
+    <h1>Manually specify LineStrings matchings for test cases</h1>
+
+    <div>
+      <a
+        class="icon-link mb-3"
+        href="https://github.com/nptscot/match_linestrings/blob/main/test_cases.md"
+        target="_blank"
+      >
+        About <i class="fa-solid fa-arrow-up-right-from-square" />
+      </a>
+    </div>
 
     {#if !setupDone}
       <SetupMode bind:sourceGj bind:targetGj bind:setupDone {zoomFit} />
     {:else}
       <div style="display: flex; justify-content: space-between;">
-        <button class="secondary" on:click={backToSetup}>Start over</button>
-        <button class="secondary" on:click={zoomFit}>Zoom to fit</button>
+        <button class="btn btn-danger" on:click={backToSetup}>
+          Start over
+        </button>
+        <button class="btn btn-secondary" on:click={zoomFit}>
+          Zoom to fit
+        </button>
       </div>
 
       <br />
 
-      <progress value={numReviewed} max={targetGj.features.length} />
+      <div
+        class="progress"
+        role="progressbar"
+        aria-valuenow={numReviewed}
+        aria-valuemin="0"
+        aria-valuemax={targetGj.features.length}
+      >
+        <div
+          class="progress-bar"
+          style:width={`${(100 * numReviewed) / targetGj.features.length}%`}
+        />
+      </div>
       <p>{numReviewed} / {targetGj.features.length} targets reviewed</p>
-      <button on:click={downloadReviewed}>Download reviews</button>
+
+      <button class="btn btn-success" on:click={downloadReviewed}>
+        Download reviews
+      </button>
     {/if}
   </div>
 
@@ -174,7 +204,7 @@
       {#if setupDone}
         <div class="map-panel">
           {#if clickedTarget == null}
-            <button on:click={gotoNext}>
+            <button class="btn btn-primary" on:click={gotoNext}>
               Goto <kbd>n</kbd>
               ext unreviewed
             </button>
@@ -250,7 +280,8 @@
     left: 10%;
     right: 10%;
 
-    background: grey;
-    padding: 8px;
+    background: white;
+    border: 1px solid black;
+    padding: 16px;
   }
 </style>

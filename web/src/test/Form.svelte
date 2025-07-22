@@ -28,20 +28,20 @@
   )}
 </h3>
 
-<p>Click sources to add or remove</p>
+<h6>Click sources to add or remove</h6>
 
 <div style="display: flex; justify-content: space-between;">
-  <button on:click={() => onConfirm("unreviewed")}>
+  <button class="btn btn-secondary" on:click={() => onConfirm("unreviewed")}>
     <kbd>1</kbd>
     - Unreviewed
   </button>
 
-  <button on:click={() => onConfirm("not sure")}>
+  <button class="btn btn-warning" on:click={() => onConfirm("not sure")}>
     <kbd>2</kbd>
     - Not sure
   </button>
 
-  <button on:click={() => onConfirm("confirmed")}>
+  <button class="btn btn-success" on:click={() => onConfirm("confirmed")}>
     <kbd>3</kbd>
     - Confirm correct
   </button>

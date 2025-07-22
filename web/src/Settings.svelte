@@ -3,14 +3,15 @@
   export let onChange: () => void;
 </script>
 
-<details open>
-  <summary>Config</summary>
+<h3>Settings</h3>
 
-  <label>
+<form>
+  <label class="form-label">
     Expand the bounding box around each target by this many meters in all
     directions
 
     <input
+      class="form-control"
       type="number"
       bind:value={options.buffer_meters}
       min="0"
@@ -20,11 +21,12 @@
     />
   </label>
 
-  <label>
+  <label class="form-label">
     How many degrees difference allowed between matches? (LineStrings pointing
     in opposite directions are ignored)
 
     <input
+      class="form-control"
       type="number"
       bind:value={options.angle_diff_threshold}
       min="0"
@@ -34,11 +36,12 @@
     />
   </label>
 
-  <label>
+  <label class="form-label">
     How large may the ratio of lengths between the candidates be? (The ratio is
     always >= 1 (longer.length / shorter.length))
 
     <input
+      class="form-control"
       type="number"
       bind:value={options.length_ratio_threshold}
       min="1"
@@ -48,10 +51,11 @@
     />
   </label>
 
-  <label>
+  <label class="form-label">
     How far away can the midpoints of the candidates be, in meters?
 
     <input
+      class="form-control"
       type="number"
       bind:value={options.midpt_dist_threshold}
       min="1"
@@ -60,4 +64,4 @@
       on:change={onChange}
     />
   </label>
-</details>
+</form>

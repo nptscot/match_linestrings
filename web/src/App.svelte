@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "bootstrap/dist/css/bootstrap.min.css";
   import { bboxPolygon } from "@turf/bbox-polygon";
   import { booleanIntersects } from "@turf/boolean-intersects";
   import { onMount } from "svelte";
@@ -170,18 +171,20 @@
   <div slot="left">
     <h1>Match LineStrings</h1>
 
-    <label>
+    <label class="form-label">
       Load two .geojson files
-      <input bind:this={fileInput} on:change={loadFiles} type="file" multiple />
+      <input
+        class="form-control"
+        bind:this={fileInput}
+        on:change={loadFiles}
+        type="file"
+        multiple
+      />
     </label>
 
     {#if sourceGj.features.length > 0}
-      <hr />
-
-      <div>
-        <button on:click={swap}>Swap</button>
-      </div>
-      <div><button on:click={zoomFit}>Zoom to fit</button></div>
+      <button class="btn btn-secondary" on:click={swap}>Swap</button>
+      <button class="btn btn-secondary" on:click={zoomFit}>Zoom to fit</button>
 
       <div style:background={sourceColor}>Sources</div>
       <p>{sourceGj.features.length} sources</p>
@@ -192,8 +195,12 @@
           (x) => x.matching_sources.length > 0,
         ).length} matching a source
       </p>
-      <label>
-        <input type="checkbox" bind:checked={showTargetsWithMatches} />
+      <label class="form-check-label mb-3">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          bind:checked={showTargetsWithMatches}
+        />
         Show targets matching a source
       </label>
 

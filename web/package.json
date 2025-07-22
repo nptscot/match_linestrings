@@ -28,8 +28,10 @@
     "vite-plugin-wasm-pack": "0.1.11"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
     "@turf/bbox-polygon": "^7.2.0",
     "@turf/boolean-intersects": "^7.2.0",
+    "bootstrap": "^5.3.7",
     "svelte-maplibre": "^0.9.7",
     "svelte-utils": "github:a-b-street/svelte-utils"
   }
