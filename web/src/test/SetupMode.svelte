@@ -113,8 +113,7 @@
 
   <p>
     {sourceGj.features.length} sources and
-    <span style="color: red">{targetGj.features.length} targets</span>
-    , with {targetGj.features.filter(
+    {targetGj.features.length} targets , with {targetGj.features.filter(
       (f) => f.properties.matching_sources.length > 0,
     ).length} matching a source
   </p>
