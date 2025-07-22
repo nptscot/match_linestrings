@@ -144,7 +144,7 @@
 
 <Layout>
   <div slot="left">
-    <h1>Manually specify LineStrings matchings for test cases</h1>
+    <h1>Manually specify LineString matchings for test cases</h1>
 
     <div>
       <a
@@ -218,13 +218,13 @@
         <LineLayer
           manageHoverState
           paint={{
-            "line-width": [
+            "line-color": [
               "case",
               ["in", ["id"], ["literal", matchingSourceIndices]],
-              8,
-              5,
+              "blue",
+              "black",
             ],
-            "line-color": "black",
+            "line-width": 8,
             "line-opacity": hoverStateFilter(0.5, 1.0),
           }}
           hoverCursor={clickedTarget == null ? undefined : "pointer"}
@@ -252,7 +252,7 @@
               ["get", "reviewed"],
               "unreviewed",
               "red",
-              "blue",
+              "green",
             ],
             "line-opacity": [
               "case",

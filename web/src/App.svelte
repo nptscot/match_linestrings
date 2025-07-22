@@ -171,6 +171,8 @@
   <div slot="left">
     <h1>Match LineStrings</h1>
 
+    <a href="review.html">Looking for the tool to review test cases?</a>
+
     <label class="form-label">
       Load two .geojson files
       <input
