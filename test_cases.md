@@ -13,12 +13,10 @@ There are a variety of ways to "map-match" or "snap" these two datasets together
 
 Each test case needs two files. The first is `sources.geojson`, containing LineString features with ascending numeric IDs corresponding to the feature's index. The properties do not matter. These represent the "roads", or things you want to match against.
 
-The second is `targets.geojson`, representing the sidewalks or cycleways or external dataset that you want to match to the sources. It also has LineString features with ascending numeric IDs corresponding to the feature's index. The properties can contain anything extra, but they must have a `reviewed` property that has one of four values:
+The second is `targets.geojson`, representing the sidewalks or cycleways or external dataset that you want to match to the sources. It also has LineString features with ascending numeric IDs corresponding to the feature's index. The properties must contain two things:
 
-1) The string `"unreviewed"`, indicating it hasn't yet been annotated
-2) The string `"not sure"`, indicating it's debatable whether this LineString is parallel to some sources or not
-3) An empty array `[]`, indicating this LineString is not parallel to any sources
-4) A list of source IDs, such as `[25]` or `[17, 38, 59]`, indicating this LineString matches with the source features containing those IDs
+1) `matching_sources`: a list of source IDs that this target corresponds to. `[]` indicates this LineString isn't parallel to any sources.
+2) `reviewed`: the string `"unreviewed"`, `"not sure"`, or `"confirmed"` to indicate if the `matching_sources` are correct yet
 
 ## Producing this input
 
@@ -29,14 +27,14 @@ First you need to pick some sources and targets. You could generate the example 
 3) Producing `sources.geojson` by selecting all roads with a wizard query such as `highway=~"motorway.*|trunk.*|primary.*|secondary.*|tertiary.*|residential|service|unclassified"` and then exporting as GeoJSON
 4) Producing `targets.geojson` by selecting all cycleways with a wizard query such as `highway=cycleway` and then exporting as GeoJSON
 
-Then you can use a small tool to annotate the file with this `reviewed` property.
+Then you can use a small tool to initially create the matching and annotate the file with this `reviewed` property.
 
 1) Go to <https://nptscot.github.io/match_linestrings/review.html>
 2) Load the two GeoJSON files you want to match
 3) Press "Swap" if the red targets are not the cycleways
-4) Scrolling down and pressing "Start review"
-5) Reviewing all targets. For each one, choosing "not sure", no matches, or specifying the sources that it matches to
-6) Pressing "Download reviews"
+4) Scroll down and press "Start review"
+5) Review all targets. For each one, clicking sources to show they're matched or not, then confirming. For unclear cases, mark "not sure"
+6) Press "Download reviews"
 
 Please send the original `sources.geojson` file and the new `reviewed_targets.geojson` file for inclusion as a test case. File a [GH issue](https://github.com/nptscot/match_linestrings/issues/new), open a PR with the two files, email to <dabreegster@gmail.com>, etc.
 

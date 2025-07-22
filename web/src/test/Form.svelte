@@ -5,26 +5,6 @@
   export let targetGj: TargetGJ;
   export let onConfirm: (value: Reviewed) => void;
 
-  let initialValue = targetGj.features[clickedTarget].properties.reviewed;
-
-  let rawList = Array.isArray(initialValue)
-    ? JSON.stringify(initialValue)
-    : JSON.stringify(
-        targetGj.features[clickedTarget].properties.matching_sources,
-      );
-
-  function parseMatches() {
-    try {
-      let list = JSON.parse(rawList);
-      if (!Array.isArray(list)) {
-        throw new Error("Not an array");
-      }
-      onConfirm(list);
-    } catch (err) {
-      window.alert("Not a list of source IDs");
-    }
-  }
-
   function onKeyDown(e: KeyboardEvent) {
     if ((e.target as HTMLElement).tagName == "INPUT") {
       return;
@@ -35,16 +15,20 @@
     } else if (e.key == "2") {
       onConfirm("not sure");
     } else if (e.key == "3") {
-      onConfirm([]);
-    } else if (e.key == "4") {
-      parseMatches();
+      onConfirm("confirmed");
     }
   }
 </script>
 
 <svelte:window on:keydown={onKeyDown} />
 
-<h3>Target {clickedTarget}: {initialValue}</h3>
+<h3>
+  Target {clickedTarget}: {JSON.stringify(
+    targetGj.features[clickedTarget].properties.matching_sources,
+  )}
+</h3>
+
+<p>Click sources to add or remove</p>
 
 <div style="display: flex; justify-content: space-between;">
   <button on:click={() => onConfirm("unreviewed")}>
@@ -57,18 +41,8 @@
     - Not sure
   </button>
 
-  <button on:click={() => onConfirm([])}>
+  <button on:click={() => onConfirm("confirmed")}>
     <kbd>3</kbd>
-    - No matches
+    - Confirm correct
   </button>
-
-  <div>
-    <div>
-      <button on:click={parseMatches}>
-        <kbd>4</kbd>
-        - These sources
-      </button>
-    </div>
-    <input type="text" bind:value={rawList} style:width="50%" />
-  </div>
 </div>

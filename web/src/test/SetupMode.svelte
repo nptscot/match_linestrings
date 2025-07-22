@@ -26,7 +26,6 @@
         ),
       );
 
-      // Modify targetGj, so we can style based on matches and mark results
       for (let [idx, f] of targetGj.features.entries()) {
         f.properties.matching_sources = matches[idx].matching_sources;
         f.properties.reviewed ??= "unreviewed";
