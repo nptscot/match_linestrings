@@ -1,12 +1,11 @@
 <script lang="ts">
-  import type { TargetMatches, TargetGJ } from "./";
+  import type { TargetGJ } from "./";
   import type { FeatureCollection } from "geojson";
   import { matchLineStrings } from "backend";
   import Settings from "../Settings.svelte";
 
   export let sourceGj: FeatureCollection;
   export let targetGj: TargetGJ;
-  export let matches: TargetMatches[];
   export let setupDone: boolean;
   export let zoomFit: () => void;
 
@@ -19,24 +18,23 @@
 
   function recalculate() {
     try {
-      matches = JSON.parse(
+      let matches = JSON.parse(
         matchLineStrings(
           JSON.stringify(sourceGj),
           JSON.stringify(targetGj),
           options,
         ),
       );
+
+      // Modify targetGj, so we can style based on matches and mark results
+      for (let [idx, f] of targetGj.features.entries()) {
+        f.properties.matching_sources = matches[idx].matching_sources;
+        f.properties.reviewed ??= "unreviewed";
+      }
+      targetGj = targetGj;
     } catch (err) {
       window.alert(`Bug: ${err}`);
-      return;
     }
-
-    // Modify targetGj, so we can style based on matches and mark results
-    for (let [idx, f] of targetGj.features.entries()) {
-      f.properties.has_match = matches[idx].matching_sources.length > 0;
-      f.properties.reviewed ??= "unreviewed";
-    }
-    targetGj = targetGj;
   }
 
   let fileInput: HTMLInputElement;
@@ -92,8 +90,9 @@
   <p>
     {sourceGj.features.length} sources and
     <span style="color: red">{targetGj.features.length} targets</span>
-    , with {matches.filter((x) => x.matching_sources.length > 0).length} matching
-    a source
+    , with {targetGj.features.filter(
+      (f) => f.properties.matching_sources.length > 0,
+    ).length} matching a source
   </p>
 
   <Settings bind:options onChange={recalculate} />

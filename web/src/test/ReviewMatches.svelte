@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TargetMatches, TargetGJ, Reviewed } from "./";
+  import type { TargetGJ, Reviewed } from "./";
   import { onMount } from "svelte";
   import "@picocss/pico/css/pico.jade.min.css";
   import type { Map, MapMouseEvent } from "maplibre-gl";
@@ -23,12 +23,13 @@
 
   let sourceGj = emptyGeojson();
   let targetGj: TargetGJ = emptyGeojson() as TargetGJ;
-  let matches: TargetMatches[] = [];
   let setupDone = false;
 
   let clickedTarget: number | null = null;
   $: matchingSourceIndices =
-    clickedTarget == null ? [] : matches[clickedTarget].matching_sources;
+    clickedTarget == null
+      ? []
+      : targetGj.features[clickedTarget].properties.matching_sources;
 
   $: numReviewed = targetGj.features.filter(
     (f) => f.properties.reviewed != "unreviewed",
@@ -87,11 +88,7 @@
   }
 
   function downloadReviewed() {
-    let copy = JSON.parse(JSON.stringify(targetGj));
-    for (let f of copy.features) {
-      delete f.properties.has_match;
-    }
-    downloadGeneratedFile("reviewed_targets.geojson", JSON.stringify(copy));
+    downloadGeneratedFile("reviewed_targets.geojson", JSON.stringify(targetGj));
   }
 
   function backToSetup() {
@@ -101,7 +98,6 @@
 
     sourceGj = emptyGeojson();
     targetGj = emptyGeojson() as TargetGJ;
-    matches = [];
     setupDone = false;
     clickedTarget = null;
   }
@@ -121,13 +117,7 @@
     <h1>Match LineStrings - review results to make test cases</h1>
 
     {#if !setupDone}
-      <SetupMode
-        bind:sourceGj
-        bind:targetGj
-        bind:matches
-        bind:setupDone
-        {zoomFit}
-      />
+      <SetupMode bind:sourceGj bind:targetGj bind:setupDone {zoomFit} />
     {:else}
       <div style="display: flex; justify-content: space-between;">
         <button class="secondary" on:click={backToSetup}>Start over</button>
@@ -211,7 +201,7 @@
               1.0,
               ["boolean", ["feature-state", "hover"], false],
               0.6,
-              ["get", "has_match"],
+              [">", ["length", ["get", "matching_sources"]], 0],
               0.5,
               0.2,
             ],
