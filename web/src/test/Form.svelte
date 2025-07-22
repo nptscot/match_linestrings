@@ -37,7 +37,7 @@
 
 <div style="display: flex; justify-content: space-between;">
   <button
-    class="btn btn-secondary"
+    class="btn btn-danger"
     class:current={currentValue == "unreviewed"}
     on:click={() => onConfirm("unreviewed")}
   >

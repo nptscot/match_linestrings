@@ -161,10 +161,10 @@
       <SetupMode bind:sourceGj bind:targetGj bind:setupDone {zoomFit} />
     {:else}
       <div style="display: flex; justify-content: space-between;">
-        <button class="btn btn-danger" on:click={backToSetup}>
+        <button class="btn btn-outline-danger" on:click={backToSetup}>
           Start over
         </button>
-        <button class="btn btn-secondary" on:click={zoomFit}>
+        <button class="btn btn-outline-secondary" on:click={zoomFit}>
           Zoom to fit
         </button>
       </div>
@@ -185,7 +185,7 @@
       </div>
       <p>{numReviewed} / {targetGj.features.length} targets reviewed</p>
 
-      <button class="btn btn-success" on:click={downloadReviewed}>
+      <button class="btn btn-outline-success" on:click={downloadReviewed}>
         Download reviews
       </button>
     {/if}
@@ -258,6 +258,8 @@
               ["get", "reviewed"],
               "unreviewed",
               "red",
+              "not sure",
+              "orange",
               "green",
             ],
             "line-opacity": [
