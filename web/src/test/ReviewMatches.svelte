@@ -198,14 +198,16 @@
         Download reviews
       </button>
 
-      <label class="form-check-label mt-5">
-        <input
-          class="form-check-input"
-          type="checkbox"
-          bind:checked={showLabels}
-        />
-        Show labels for matches
-      </label>
+      <div>
+        <label class="form-check-label mt-5">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            bind:checked={showLabels}
+          />
+          Show labels for matches
+        </label>
+      </div>
       <div class="card">
         <div class="card-body">
           <h5 class="card-title">Legend</h5>
