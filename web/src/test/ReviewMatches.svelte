@@ -2,6 +2,7 @@
   import "bootstrap/dist/css/bootstrap.min.css";
   import "@fortawesome/fontawesome-free/css/all.min.css";
   import { autosaveKey, type TargetGJ, type Reviewed } from "./";
+  import { Basemaps, basemapStyles } from "../utils/basemaps";
   import { onMount } from "svelte";
   import type { Map } from "maplibre-gl";
   import {
@@ -25,6 +26,7 @@
   import SetupMode from "./SetupMode.svelte";
 
   let map: Map | undefined;
+  let style = basemapStyles["Maptiler Dataviz"];
 
   let sourceGj = emptyGeojson();
   let targetGj: TargetGJ = emptyGeojson() as TargetGJ;
@@ -224,7 +226,7 @@
 
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre
-      style="https://api.maptiler.com/maps/dataviz/style.json?key=MZEJTanw3WpxRvt7qDfo"
+      {style}
       standardControls
       bind:map
       hash
@@ -233,6 +235,8 @@
         console.log(e.detail.error);
       }}
     >
+      <Basemaps bind:style choice="Maptiler Dataviz" />
+
       {#if setupDone}
         <div class="map-panel">
           {#if clickedTarget == null}

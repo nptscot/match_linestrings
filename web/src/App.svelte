@@ -2,6 +2,7 @@
   import "bootstrap/dist/css/bootstrap.min.css";
   import { bboxPolygon } from "@turf/bbox-polygon";
   import { booleanIntersects } from "@turf/boolean-intersects";
+  import { Basemaps, basemapStyles } from "./utils/basemaps";
   import { onMount } from "svelte";
   import type { Map } from "maplibre-gl";
   import {
@@ -19,6 +20,7 @@
   import Settings from "./Settings.svelte";
 
   let map: Map | undefined;
+  let style = basemapStyles["Maptiler Dataviz"];
 
   let sourceGj = emptyGeojson();
   let sourceColor = "red";
@@ -212,7 +214,7 @@
 
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre
-      style="https://api.maptiler.com/maps/dataviz/style.json?key=MZEJTanw3WpxRvt7qDfo"
+      {style}
       standardControls
       bind:map
       hash
@@ -221,6 +223,8 @@
         console.log(e.detail.error);
       }}
     >
+      <Basemaps bind:style choice="Maptiler Dataviz" />
+
       <GeoJSON data={sourceGj}>
         <LineLayer
           manageHoverState
