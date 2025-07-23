@@ -6,7 +6,7 @@
   export let onConfirm: (value: Reviewed) => void;
   export let onCancel: () => void;
 
-  $: currentValue = targetGj.features[clickedTarget].properties.reviewed;
+  $: props = targetGj.features[clickedTarget].properties;
 
   function onKeyDown(e: KeyboardEvent) {
     if ((e.target as HTMLElement).tagName == "INPUT") {
@@ -29,9 +29,12 @@
 
 <div style="display: flex; justify-content: space-between;">
   <h3>
-    Target {clickedTarget}: {JSON.stringify(
-      targetGj.features[clickedTarget].properties.matching_sources,
-    )}
+    Target {clickedTarget}:
+    {#if props.matching_sources.length > 0}
+      {JSON.stringify(props.matching_sources)}
+    {:else}
+      no matches (off-road)
+    {/if}
   </h3>
   <button class="btn btn-secondary" on:click={onCancel}>
     <kbd>Escape</kbd>
@@ -44,7 +47,7 @@
 <div style="display: flex; justify-content: space-between;">
   <button
     class="btn btn-danger"
-    class:current={currentValue == "unreviewed"}
+    class:current={props.reviewed == "unreviewed"}
     on:click={() => onConfirm("unreviewed")}
   >
     <kbd>1</kbd>
@@ -53,7 +56,7 @@
 
   <button
     class="btn btn-warning"
-    class:current={currentValue == "not sure"}
+    class:current={props.reviewed == "not sure"}
     on:click={() => onConfirm("not sure")}
   >
     <kbd>2</kbd>
@@ -62,7 +65,7 @@
 
   <button
     class="btn btn-success"
-    class:current={currentValue == "confirmed"}
+    class:current={props.reviewed == "confirmed"}
     on:click={() => onConfirm("confirmed")}
   >
     <kbd>3</kbd>

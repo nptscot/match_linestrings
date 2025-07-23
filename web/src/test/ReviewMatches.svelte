@@ -340,7 +340,12 @@
             "text-halo-width": 4,
           }}
           layout={{
-            "text-field": ["to-string", ["get", "matching_sources"]],
+            "text-field": [
+              "case",
+              [">", ["length", ["get", "matching_sources"]], 0],
+              ["to-string", ["get", "matching_sources"]],
+              "off-road",
+            ],
             "text-size": 16,
             "symbol-placement": "line",
             visibility: showLabels ? "visible" : "none",
