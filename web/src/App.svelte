@@ -3,6 +3,7 @@
   import { bboxPolygon } from "@turf/bbox-polygon";
   import { booleanIntersects } from "@turf/boolean-intersects";
   import { Basemaps, basemapStyles } from "./utils/basemaps";
+  import StandardControls from "./utils/StandardControls.svelte";
   import { onMount } from "svelte";
   import type { Map } from "maplibre-gl";
   import {
@@ -215,7 +216,6 @@
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre
       {style}
-      standardControls
       bind:map
       hash
       on:error={(e) => {
@@ -223,6 +223,7 @@
         console.log(e.detail.error);
       }}
     >
+      <StandardControls {map} />
       <Basemaps bind:style choice="Maptiler Dataviz" />
 
       <GeoJSON data={sourceGj}>

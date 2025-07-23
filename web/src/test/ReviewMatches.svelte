@@ -1,6 +1,7 @@
 <script lang="ts">
   import "bootstrap/dist/css/bootstrap.min.css";
   import "@fortawesome/fontawesome-free/css/all.min.css";
+  import StandardControls from "../utils/StandardControls.svelte";
   import { autosaveKey, type TargetGJ, type Reviewed } from "./";
   import { Basemaps, basemapStyles } from "../utils/basemaps";
   import { onMount } from "svelte";
@@ -229,7 +230,6 @@
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre
       {style}
-      standardControls
       bind:map
       hash
       on:error={(e) => {
@@ -237,6 +237,7 @@
         console.log(e.detail.error);
       }}
     >
+      <StandardControls {map} />
       <Basemaps bind:style choice="Maptiler Dataviz" />
 
       {#if setupDone}
