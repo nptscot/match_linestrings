@@ -18,14 +18,19 @@ The second is `targets.geojson`, representing the sidewalks or cycleways or exte
 1) `matching_sources`: a list of source IDs that this target corresponds to. `[]` indicates this LineString isn't parallel to any sources.
 2) `reviewed`: the string `"unreviewed"`, `"not sure"`, or `"confirmed"` to indicate if the `matching_sources` are correct yet
 
+Both files must split LineStrings when they cross at true intersections -- they must form a graph structure, acting as edges. OSM ways by default are usually not mapped this way, so they need to be split.
+
 ## Producing this input
 
-First you need to pick some sources and targets. You could generate the example with cycleways from OSM using Overpass by:
+First you need to pick some sources and targets. You could generate this from OSM data yourself by splitting ways when they cross at intersections and separating into roads and cycleways. A simple way is:
 
-1) Going to <https://overpass-turbo.eu>
+1) Go to <https://dabreegster.github.io/road-bundler>
 2) Navigating somewhere interesting, picking an area with at least a few examples, but small enough (not an entire city in one file) to annotate reasonably quickly
-3) Producing `sources.geojson` by selecting all roads with a wizard query such as `highway=~"motorway.*|trunk.*|primary.*|secondary.*|tertiary.*|residential|service|unclassified"` and then exporting as GeoJSON
-4) Producing `targets.geojson` by selecting all cycleways with a wizard query such as `highway=cycleway` and then exporting as GeoJSON
+3) "Import current view" or "Draw an area to import on the map"
+4) Pressing "4" or clicking the 4th icon in the toolbar (Sidepaths)
+5) "Destructively remove all footways"
+6) "Download GJ of motorized and nonmotorized roads"
+7) This should download two files in your browser
 
 Then you can use a small tool to initially create the matching and annotate the file with this `reviewed` property.
 
