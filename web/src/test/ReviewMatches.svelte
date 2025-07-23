@@ -9,6 +9,7 @@
     MapLibre,
     LineLayer,
     hoverStateFilter,
+    SymbolLayer,
     Popup,
     type LayerClickInfo,
   } from "svelte-maplibre";
@@ -28,6 +29,7 @@
   let sourceGj = emptyGeojson();
   let targetGj: TargetGJ = emptyGeojson() as TargetGJ;
   let setupDone = false;
+  let showLabels = false;
 
   let clickedTarget: number | null = null;
   $: matchingSourceIndices =
@@ -120,6 +122,7 @@
     targetGj = emptyGeojson() as TargetGJ;
     setupDone = false;
     clickedTarget = null;
+    showLabels = false;
     window.localStorage.removeItem(autosaveKey);
   }
 
@@ -193,7 +196,15 @@
         Download reviews
       </button>
 
-      <div class="card mt-5">
+      <label class="form-check-label mt-5">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          bind:checked={showLabels}
+        />
+        Show labels for matches
+      </label>
+      <div class="card">
         <div class="card-body">
           <h5 class="card-title">Legend</h5>
           <QualitativeLegend
@@ -266,6 +277,20 @@
             </Popup>
           {/if}
         </LineLayer>
+
+        <SymbolLayer
+          paint={{
+            "text-color": "white",
+            "text-halo-color": "grey",
+            "text-halo-width": 4,
+          }}
+          layout={{
+            "text-field": ["to-string", ["id"]],
+            "text-size": 16,
+            "symbol-placement": "line",
+            visibility: showLabels ? "visible" : "none",
+          }}
+        />
       </GeoJSON>
 
       <GeoJSON data={targetGj}>
@@ -298,6 +323,28 @@
           }}
           hoverCursor="pointer"
           on:click={onClickTarget}
+        />
+
+        <SymbolLayer
+          paint={{
+            "text-color": "white",
+            "text-halo-color": [
+              "match",
+              ["get", "reviewed"],
+              "unreviewed",
+              "red",
+              "not sure",
+              "orange",
+              "green",
+            ],
+            "text-halo-width": 4,
+          }}
+          layout={{
+            "text-field": ["to-string", ["get", "matching_sources"]],
+            "text-size": 16,
+            "symbol-placement": "line",
+            visibility: showLabels ? "visible" : "none",
+          }}
         />
       </GeoJSON>
     </MapLibre>
