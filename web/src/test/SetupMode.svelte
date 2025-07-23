@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { TargetGJ } from "./";
   import type { FeatureCollection } from "geojson";
-  import { matchLineStrings } from "backend";
+  import * as backend from "../../../backend/pkg";
   import Settings from "../Settings.svelte";
 
   export let sourceGj: FeatureCollection;
@@ -24,7 +24,7 @@
     }
     try {
       let matches = JSON.parse(
-        matchLineStrings(
+        backend.matchLineStrings(
           JSON.stringify(sourceGj),
           JSON.stringify(targetGj),
           options,

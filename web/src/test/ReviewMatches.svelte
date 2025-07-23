@@ -19,7 +19,7 @@
     downloadGeneratedFile,
     QualitativeLegend,
   } from "svelte-utils";
-  import init from "backend";
+  import * as backend from "../../../backend/pkg";
   import Form from "./Form.svelte";
   import SetupMode from "./SetupMode.svelte";
 
@@ -40,7 +40,7 @@
   ).length;
 
   onMount(async () => {
-    await init();
+    await backend.default();
 
     try {
       let restore = window.localStorage.getItem(autosaveKey);

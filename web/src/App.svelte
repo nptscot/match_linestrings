@@ -15,7 +15,7 @@
   import { emptyGeojson, bbox } from "svelte-utils/map";
   import { downloadGeneratedFile } from "svelte-utils";
   import type { Feature, FeatureCollection } from "geojson";
-  import init, { matchLineStrings } from "backend";
+  import * as backend from "../../backend/pkg";
   import Settings from "./Settings.svelte";
 
   let map: Map | undefined;
@@ -42,7 +42,7 @@
   let matches: TargetMatches[] = [];
 
   onMount(async () => {
-    await init();
+    await backend.default();
   });
 
   $: matchingSourceIndices =
@@ -53,7 +53,7 @@
   function recalculate() {
     try {
       matches = JSON.parse(
-        matchLineStrings(
+        backend.matchLineStrings(
           JSON.stringify(sourceGj),
           JSON.stringify(targetGj),
           options,
