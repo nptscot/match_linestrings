@@ -240,7 +240,11 @@
       {#if setupDone}
         <div class="map-panel">
           {#if clickedTarget == null}
-            <button class="btn btn-primary" on:click={gotoNext}>
+            <button
+              class="btn btn-primary"
+              on:click={gotoNext}
+              disabled={numReviewed == targetGj.features.length}
+            >
               Goto <kbd>n</kbd>
               ext unreviewed
             </button>
