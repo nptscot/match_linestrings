@@ -4,6 +4,7 @@
   import { booleanIntersects } from "@turf/boolean-intersects";
   import { Basemaps, basemapStyles } from "./utils/basemaps";
   import StandardControls from "./utils/StandardControls.svelte";
+  import MapContextMenu from "./utils/MapContextMenu.svelte";
   import { onMount } from "svelte";
   import type { Map } from "maplibre-gl";
   import {
@@ -224,6 +225,7 @@
       }}
     >
       <StandardControls {map} />
+      <MapContextMenu {map} />
       <Basemaps bind:style choice="Maptiler Dataviz" />
 
       <GeoJSON data={sourceGj}>
