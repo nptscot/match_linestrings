@@ -2,9 +2,6 @@
   import "bootstrap/dist/css/bootstrap.min.css";
   import { bboxPolygon } from "@turf/bbox-polygon";
   import { booleanIntersects } from "@turf/boolean-intersects";
-  import { Basemaps, basemapStyles } from "./utils/basemaps";
-  import StandardControls from "./utils/StandardControls.svelte";
-  import MapContextMenu from "./utils/MapContextMenu.svelte";
   import { onMount } from "svelte";
   import type { Map } from "maplibre-gl";
   import {
@@ -15,7 +12,14 @@
     type LayerClickInfo,
   } from "svelte-maplibre";
   import { Layout } from "svelte-utils/two_column_layout";
-  import { emptyGeojson, bbox } from "svelte-utils/map";
+  import {
+    basemapStyles,
+    Basemaps,
+    StandardControls,
+    MapContextMenu,
+    emptyGeojson,
+    bbox,
+  } from "svelte-utils/map";
   import { downloadGeneratedFile } from "svelte-utils";
   import type { Feature, FeatureCollection } from "geojson";
   import * as backend from "../../backend/pkg";

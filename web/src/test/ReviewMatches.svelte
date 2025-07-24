@@ -1,10 +1,7 @@
 <script lang="ts">
   import "bootstrap/dist/css/bootstrap.min.css";
   import "@fortawesome/fontawesome-free/css/all.min.css";
-  import StandardControls from "../utils/StandardControls.svelte";
-  import MapContextMenu from "../utils/MapContextMenu.svelte";
   import { autosaveKey, type TargetGJ, type Reviewed } from "./";
-  import { Basemaps, basemapStyles } from "../utils/basemaps";
   import { onMount } from "svelte";
   import type { Map } from "maplibre-gl";
   import {
@@ -17,7 +14,14 @@
     type LayerClickInfo,
   } from "svelte-maplibre";
   import { Layout } from "svelte-utils/two_column_layout";
-  import { emptyGeojson, bbox } from "svelte-utils/map";
+  import {
+    basemapStyles,
+    Basemaps,
+    StandardControls,
+    MapContextMenu,
+    emptyGeojson,
+    bbox,
+  } from "svelte-utils/map";
   import {
     notNull,
     downloadGeneratedFile,
