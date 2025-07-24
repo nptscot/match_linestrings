@@ -26,6 +26,7 @@
     notNull,
     downloadGeneratedFile,
     QualitativeLegend,
+    Checkbox,
   } from "svelte-utils";
   import * as backend from "../../../backend/pkg";
   import Form from "./Form.svelte";
@@ -204,15 +205,8 @@
         Download reviews
       </button>
 
-      <div>
-        <label class="form-check-label mt-5">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            bind:checked={showLabels}
-          />
-          Show labels for matches
-        </label>
+      <div class="mt-5">
+        <Checkbox bind:checked={showLabels}>Show labels for matches</Checkbox>
       </div>
       <div class="card">
         <div class="card-body">

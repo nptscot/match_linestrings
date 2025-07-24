@@ -20,7 +20,7 @@
     emptyGeojson,
     bbox,
   } from "svelte-utils/map";
-  import { downloadGeneratedFile } from "svelte-utils";
+  import { downloadGeneratedFile, Checkbox } from "svelte-utils";
   import type { Feature, FeatureCollection } from "geojson";
   import * as backend from "../../backend/pkg";
   import Settings from "./Settings.svelte";
@@ -205,14 +205,9 @@
           (x) => x.matching_sources.length > 0,
         ).length} matching a source
       </p>
-      <label class="form-check-label mb-3">
-        <input
-          class="form-check-input"
-          type="checkbox"
-          bind:checked={showTargetsWithMatches}
-        />
+      <Checkbox bind:checked={showTargetsWithMatches}>
         Show targets matching a source
-      </label>
+      </Checkbox>
 
       <Settings bind:options onChange={recalculate} />
     {/if}
