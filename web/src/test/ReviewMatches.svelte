@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import "bootstrap/dist/css/bootstrap.min.css";
   import "@fortawesome/fontawesome-free/css/all.min.css";
   import { autosaveKey, type TargetGJ, type Reviewed } from "./";
@@ -32,23 +34,25 @@
   import Form from "./Form.svelte";
   import SetupMode from "./SetupMode.svelte";
 
-  let map: Map | undefined;
-  let style = basemapStyles["Maptiler Dataviz"];
+  let map: Map | undefined = $state();
+  let style = $state(basemapStyles["Maptiler Dataviz"]);
 
-  let sourceGj = emptyGeojson();
-  let targetGj: TargetGJ = emptyGeojson() as TargetGJ;
-  let setupDone = false;
-  let showLabels = false;
+  let sourceGj = $state(emptyGeojson());
+  let targetGj: TargetGJ = $state(emptyGeojson() as TargetGJ);
+  let setupDone = $state(false);
+  let showLabels = $state(false);
 
-  let clickedTarget: number | null = null;
-  $: matchingSourceIndices =
+  let clickedTarget: number | null = $state(null);
+  let matchingSourceIndices = $derived(
     clickedTarget == null
       ? []
-      : targetGj.features[clickedTarget].properties.matching_sources;
+      : targetGj.features[clickedTarget].properties.matching_sources,
+  );
 
-  $: numReviewed = targetGj.features.filter(
-    (f) => f.properties.reviewed != "unreviewed",
-  ).length;
+  let numReviewed = $derived(
+    targetGj.features.filter((f) => f.properties.reviewed != "unreviewed")
+      .length,
+  );
 
   onMount(async () => {
     await backend.default();
@@ -66,13 +70,15 @@
     }
   });
 
-  $: if (setupDone) {
-    console.log(`Autosaving with ${numReviewed} reviewed targets`);
-    window.localStorage.setItem(
-      autosaveKey,
-      JSON.stringify([sourceGj, targetGj]),
-    );
-  }
+  run(() => {
+    if (setupDone) {
+      console.log(`Autosaving with ${numReviewed} reviewed targets`);
+      window.localStorage.setItem(
+        autosaveKey,
+        JSON.stringify([sourceGj, targetGj]),
+      );
+    }
+  });
 
   function zoomFit() {
     let gj = {
@@ -157,214 +163,220 @@
   }
 </script>
 
-<svelte:window on:keydown={onKeyDown} />
+<svelte:window onkeydown={onKeyDown} />
 
 <Layout>
-  <div slot="left">
-    <h1>Manually specify LineString matchings for test cases</h1>
-
+  {#snippet left()}
     <div>
-      <a
-        class="icon-link mb-3"
-        href="https://github.com/nptscot/match_linestrings/blob/main/tests/README.md"
-        target="_blank"
-      >
-        About <i class="fa-solid fa-arrow-up-right-from-square" />
-      </a>
-    </div>
+      <h1>Manually specify LineString matchings for test cases</h1>
 
-    {#if !setupDone}
-      <SetupMode bind:sourceGj bind:targetGj bind:setupDone {zoomFit} />
-    {:else}
-      <div style="display: flex; justify-content: space-between;">
-        <button class="btn btn-outline-danger" on:click={backToSetup}>
-          Start over
-        </button>
-        <button class="btn btn-outline-secondary" on:click={zoomFit}>
-          Zoom to fit
-        </button>
+      <div>
+        <a
+          class="icon-link mb-3"
+          href="https://github.com/nptscot/match_linestrings/blob/main/tests/README.md"
+          target="_blank"
+        >
+          About <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        </a>
       </div>
 
-      <br />
-
-      <div
-        class="progress"
-        role="progressbar"
-        aria-valuenow={numReviewed}
-        aria-valuemin="0"
-        aria-valuemax={targetGj.features.length}
-      >
-        <div
-          class="progress-bar"
-          style:width={`${(100 * numReviewed) / targetGj.features.length}%`}
-        />
-      </div>
-      <p>{numReviewed} / {targetGj.features.length} targets reviewed</p>
-
-      <button class="btn btn-outline-success" on:click={downloadReviewed}>
-        Download reviews
-      </button>
-
-      <div class="mt-5">
-        <Checkbox bind:checked={showLabels}>Show labels for matches</Checkbox>
-      </div>
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Legend</h5>
-          <QualitativeLegend
-            itemsPerRow={1}
-            labelColors={{
-              Confirmed: "green",
-              "Not sure": "orange",
-              Unreviewed: "red",
-              Source: "grey",
-            }}
-          />
-          <p>Thinner lines have a match, thicker are off-road</p>
+      {#if !setupDone}
+        <SetupMode bind:sourceGj bind:targetGj bind:setupDone {zoomFit} />
+      {:else}
+        <div style="display: flex; justify-content: space-between;">
+          <button class="btn btn-outline-danger" onclick={backToSetup}>
+            Start over
+          </button>
+          <button class="btn btn-outline-secondary" onclick={zoomFit}>
+            Zoom to fit
+          </button>
         </div>
-      </div>
-    {/if}
-  </div>
 
-  <div slot="main" style="position:relative; width: 100%; height: 100vh;">
-    <MapLibre
-      {style}
-      bind:map
-      hash
-      on:error={(e) => {
-        // @ts-ignore ErrorEvent isn't exported
-        console.log(e.detail.error);
-      }}
-    >
-      <StandardControls {map} />
-      <MapContextMenu {map} />
-      <Basemaps bind:style choice="Maptiler Dataviz" />
+        <br />
 
-      {#if setupDone}
-        <div class="map-panel">
-          {#if clickedTarget == null}
-            <button
-              class="btn btn-primary"
-              on:click={gotoNext}
-              disabled={numReviewed == targetGj.features.length}
-            >
-              Goto <kbd>n</kbd>
-              ext unreviewed
-            </button>
-          {:else}
-            <Form
-              {clickedTarget}
-              {targetGj}
-              {onConfirm}
-              onCancel={() => (clickedTarget = null)}
+        <div
+          class="progress"
+          role="progressbar"
+          aria-valuenow={numReviewed}
+          aria-valuemin="0"
+          aria-valuemax={targetGj.features.length}
+        >
+          <div
+            class="progress-bar"
+            style:width={`${(100 * numReviewed) / targetGj.features.length}%`}
+          ></div>
+        </div>
+        <p>{numReviewed} / {targetGj.features.length} targets reviewed</p>
+
+        <button class="btn btn-outline-success" onclick={downloadReviewed}>
+          Download reviews
+        </button>
+
+        <div class="mt-5">
+          <Checkbox bind:checked={showLabels}>Show labels for matches</Checkbox>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Legend</h5>
+            <QualitativeLegend
+              itemsPerRow={1}
+              labelColors={{
+                Confirmed: "green",
+                "Not sure": "orange",
+                Unreviewed: "red",
+                Source: "grey",
+              }}
             />
-          {/if}
+            <p>Thinner lines have a match, thicker are off-road</p>
+          </div>
         </div>
       {/if}
+    </div>
+  {/snippet}
 
-      <GeoJSON data={sourceGj}>
-        <LineLayer
-          manageHoverState
-          paint={{
-            "line-color": [
-              "case",
-              ["in", ["id"], ["literal", matchingSourceIndices]],
-              "blue",
-              "black",
-            ],
-            "line-width": 8,
-            "line-opacity": hoverStateFilter(0.5, 1.0),
-          }}
-          hoverCursor={clickedTarget == null ? undefined : "pointer"}
-          on:click={onClickSource}
-        >
-          {#if clickedTarget != null}
-            <Popup openOn="hover" let:data>
-              Source {notNull(data).id} -- click to {matchingSourceIndices.includes(
-                notNull(data).id,
-              )
-                ? "remove"
-                : "add"}
-            </Popup>
-          {/if}
-        </LineLayer>
+  {#snippet main()}
+    <div style="position:relative; width: 100%; height: 100vh;">
+      <MapLibre
+        {style}
+        bind:map
+        hash
+        on:error={(e) => {
+          // @ts-ignore ErrorEvent isn't exported
+          console.log(e.detail.error);
+        }}
+      >
+        <StandardControls {map} />
+        <MapContextMenu {map} />
+        <Basemaps bind:style choice="Maptiler Dataviz" />
 
-        <SymbolLayer
-          paint={{
-            "text-color": "white",
-            "text-halo-color": "grey",
-            "text-halo-width": 4,
-          }}
-          layout={{
-            "text-field": ["to-string", ["id"]],
-            "text-size": 16,
-            "symbol-placement": "line",
-            visibility: showLabels ? "visible" : "none",
-          }}
-        />
-      </GeoJSON>
+        {#if setupDone}
+          <div class="map-panel">
+            {#if clickedTarget == null}
+              <button
+                class="btn btn-primary"
+                onclick={gotoNext}
+                disabled={numReviewed == targetGj.features.length}
+              >
+                Goto <kbd>n</kbd>
+                ext unreviewed
+              </button>
+            {:else}
+              <Form
+                {clickedTarget}
+                {targetGj}
+                {onConfirm}
+                onCancel={() => (clickedTarget = null)}
+              />
+            {/if}
+          </div>
+        {/if}
 
-      <GeoJSON data={targetGj}>
-        <LineLayer
-          manageHoverState
-          paint={{
-            "line-width": [
-              "case",
-              [">", ["length", ["get", "matching_sources"]], 0],
-              8,
-              16,
-            ],
-            "line-color": [
-              "match",
-              ["get", "reviewed"],
-              "unreviewed",
-              "red",
-              "not sure",
-              "orange",
-              "green",
-            ],
-            "line-opacity": [
-              "case",
-              ["==", ["id"], clickedTarget ?? -1],
-              1.0,
-              ["boolean", ["feature-state", "hover"], false],
-              0.6,
-              0.3,
-            ],
-          }}
-          hoverCursor="pointer"
-          on:click={onClickTarget}
-        />
+        <GeoJSON data={sourceGj}>
+          <LineLayer
+            manageHoverState
+            paint={{
+              "line-color": [
+                "case",
+                ["in", ["id"], ["literal", matchingSourceIndices]],
+                "blue",
+                "black",
+              ],
+              "line-width": 8,
+              "line-opacity": hoverStateFilter(0.5, 1.0),
+            }}
+            hoverCursor={clickedTarget == null ? undefined : "pointer"}
+            on:click={onClickSource}
+          >
+            {#if clickedTarget != null}
+              <Popup openOn="hover">
+                {#snippet children({ data })}
+                  Source {notNull(data).id} -- click to {matchingSourceIndices.includes(
+                    notNull(data).id,
+                  )
+                    ? "remove"
+                    : "add"}
+                {/snippet}
+              </Popup>
+            {/if}
+          </LineLayer>
 
-        <SymbolLayer
-          paint={{
-            "text-color": "white",
-            "text-halo-color": [
-              "match",
-              ["get", "reviewed"],
-              "unreviewed",
-              "red",
-              "not sure",
-              "orange",
-              "green",
-            ],
-            "text-halo-width": 4,
-          }}
-          layout={{
-            "text-field": [
-              "case",
-              [">", ["length", ["get", "matching_sources"]], 0],
-              ["to-string", ["get", "matching_sources"]],
-              "off-road",
-            ],
-            "text-size": 16,
-            "symbol-placement": "line",
-            visibility: showLabels ? "visible" : "none",
-          }}
-        />
-      </GeoJSON>
-    </MapLibre>
-  </div>
+          <SymbolLayer
+            paint={{
+              "text-color": "white",
+              "text-halo-color": "grey",
+              "text-halo-width": 4,
+            }}
+            layout={{
+              "text-field": ["to-string", ["id"]],
+              "text-size": 16,
+              "symbol-placement": "line",
+              visibility: showLabels ? "visible" : "none",
+            }}
+          />
+        </GeoJSON>
+
+        <GeoJSON data={targetGj}>
+          <LineLayer
+            manageHoverState
+            paint={{
+              "line-width": [
+                "case",
+                [">", ["length", ["get", "matching_sources"]], 0],
+                8,
+                16,
+              ],
+              "line-color": [
+                "match",
+                ["get", "reviewed"],
+                "unreviewed",
+                "red",
+                "not sure",
+                "orange",
+                "green",
+              ],
+              "line-opacity": [
+                "case",
+                ["==", ["id"], clickedTarget ?? -1],
+                1.0,
+                ["boolean", ["feature-state", "hover"], false],
+                0.6,
+                0.3,
+              ],
+            }}
+            hoverCursor="pointer"
+            on:click={onClickTarget}
+          />
+
+          <SymbolLayer
+            paint={{
+              "text-color": "white",
+              "text-halo-color": [
+                "match",
+                ["get", "reviewed"],
+                "unreviewed",
+                "red",
+                "not sure",
+                "orange",
+                "green",
+              ],
+              "text-halo-width": 4,
+            }}
+            layout={{
+              "text-field": [
+                "case",
+                [">", ["length", ["get", "matching_sources"]], 0],
+                ["to-string", ["get", "matching_sources"]],
+                "off-road",
+              ],
+              "text-size": 16,
+              "symbol-placement": "line",
+              visibility: showLabels ? "visible" : "none",
+            }}
+          />
+        </GeoJSON>
+      </MapLibre>
+    </div>
+  {/snippet}
 </Layout>
 
 <style>

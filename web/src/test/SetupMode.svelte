@@ -4,19 +4,28 @@
   import * as backend from "../../../backend/pkg";
   import Settings from "../Settings.svelte";
 
-  export let sourceGj: FeatureCollection;
-  export let targetGj: TargetGJ;
-  export let setupDone: boolean;
-  export let zoomFit: () => void;
+  interface Props {
+    sourceGj: FeatureCollection;
+    targetGj: TargetGJ;
+    setupDone: boolean;
+    zoomFit: () => void;
+  }
 
-  let alreadyHasMatching = false;
+  let {
+    sourceGj = $bindable(),
+    targetGj = $bindable(),
+    setupDone = $bindable(),
+    zoomFit,
+  }: Props = $props();
 
-  let options = {
+  let alreadyHasMatching = $state(false);
+
+  let options = $state({
     buffer_meters: 20.0,
     angle_diff_threshold: 10.0,
     length_ratio_threshold: 1.1,
     midpt_dist_threshold: 15.0,
-  };
+  });
 
   function recalculate() {
     if (alreadyHasMatching) {
@@ -41,7 +50,7 @@
     }
   }
 
-  let fileInput: HTMLInputElement;
+  let fileInput: HTMLInputElement = $state();
   async function loadFiles(e: Event) {
     if (!fileInput.files) {
       return;
@@ -96,7 +105,7 @@
   <input
     class="form-control"
     bind:this={fileInput}
-    on:change={loadFiles}
+    onchange={loadFiles}
     type="file"
     multiple
   />
@@ -105,7 +114,7 @@
 {#if sourceGj.features.length > 0}
   <button
     class="btn btn-secondary"
-    on:click={swap}
+    onclick={swap}
     disabled={alreadyHasMatching}
   >
     Swap
@@ -118,7 +127,7 @@
     ).length} matching a source
   </p>
 
-  <button class="btn btn-primary mb-5" on:click={() => (setupDone = true)}>
+  <button class="btn btn-primary mb-5" onclick={() => (setupDone = true)}>
     Start review
   </button>
 

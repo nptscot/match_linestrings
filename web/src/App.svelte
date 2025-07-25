@@ -25,38 +25,39 @@
   import * as backend from "../../backend/pkg";
   import Settings from "./Settings.svelte";
 
-  let map: Map | undefined;
-  let style = basemapStyles["Maptiler Dataviz"];
+  let map: Map | undefined = $state();
+  let style = $state(basemapStyles["Maptiler Dataviz"]);
 
-  let sourceGj = emptyGeojson();
+  let sourceGj = $state(emptyGeojson());
   let sourceColor = "red";
 
-  let targetGj = emptyGeojson();
+  let targetGj = $state(emptyGeojson());
   let targetColor = "blue";
-  let hoveredTarget: Feature | null = null;
-  let showTargetsWithMatches = true;
+  let hoveredTarget: Feature | null = $state(null);
+  let showTargetsWithMatches = $state(true);
 
-  let options = {
+  let options = $state({
     buffer_meters: 20.0,
     angle_diff_threshold: 10.0,
     length_ratio_threshold: 1.1,
     midpt_dist_threshold: 15.0,
-  };
+  });
 
   interface TargetMatches {
     // Indices of sources matching this target
     matching_sources: number[];
   }
-  let matches: TargetMatches[] = [];
+  let matches: TargetMatches[] = $state([]);
 
   onMount(async () => {
     await backend.default();
   });
 
-  $: matchingSourceIndices =
+  let matchingSourceIndices = $derived(
     hoveredTarget == null
       ? []
-      : matches[hoveredTarget.id as number].matching_sources;
+      : matches[hoveredTarget.id as number].matching_sources,
+  );
 
   function recalculate() {
     try {
@@ -79,7 +80,7 @@
     targetGj = targetGj;
   }
 
-  let fileInput: HTMLInputElement;
+  let fileInput: HTMLInputElement = $state();
   async function loadFiles(e: Event) {
     if (!fileInput.files) {
       return;
@@ -176,91 +177,95 @@
 </script>
 
 <Layout>
-  <div slot="left">
-    <h1>Match LineStrings</h1>
+  {#snippet left()}
+    <div>
+      <h1>Match LineStrings</h1>
 
-    <a href="review.html">Looking for the tool to review test cases?</a>
+      <a href="review.html">Looking for the tool to review test cases?</a>
 
-    <label class="form-label">
-      Load two .geojson files
-      <input
-        class="form-control"
-        bind:this={fileInput}
-        on:change={loadFiles}
-        type="file"
-        multiple
-      />
-    </label>
-
-    {#if sourceGj.features.length > 0}
-      <button class="btn btn-secondary" on:click={swap}>Swap</button>
-      <button class="btn btn-secondary" on:click={zoomFit}>Zoom to fit</button>
-
-      <div style:background={sourceColor}>Sources</div>
-      <p>{sourceGj.features.length} sources</p>
-
-      <div style:background={targetColor}>Target</div>
-      <p>
-        {targetGj.features.length} targets, with {matches.filter(
-          (x) => x.matching_sources.length > 0,
-        ).length} matching a source
-      </p>
-      <Checkbox bind:checked={showTargetsWithMatches}>
-        Show targets matching a source
-      </Checkbox>
-
-      <Settings bind:options onChange={recalculate} />
-    {/if}
-  </div>
-
-  <div slot="main" style="position:relative; width: 100%; height: 100vh;">
-    <MapLibre
-      {style}
-      bind:map
-      hash
-      on:error={(e) => {
-        // @ts-ignore ErrorEvent isn't exported
-        console.log(e.detail.error);
-      }}
-    >
-      <StandardControls {map} />
-      <MapContextMenu {map} />
-      <Basemaps bind:style choice="Maptiler Dataviz" />
-
-      <GeoJSON data={sourceGj}>
-        <LineLayer
-          manageHoverState
-          paint={{
-            "line-width": [
-              "case",
-              ["in", ["id"], ["literal", matchingSourceIndices]],
-              8,
-              5,
-            ],
-            "line-color": sourceColor,
-            "line-opacity": hoverStateFilter(0.5, 1.0),
-          }}
+      <label class="form-label">
+        Load two .geojson files
+        <input
+          class="form-control"
+          bind:this={fileInput}
+          onchange={loadFiles}
+          type="file"
+          multiple
         />
-      </GeoJSON>
+      </label>
 
-      <GeoJSON data={targetGj}>
-        <LineLayer
-          manageHoverState
-          filter={showTargetsWithMatches
-            ? undefined
-            : ["!", ["get", "has_match"]]}
-          paint={{
-            "line-width": 8,
-            "line-color": targetColor,
-            "line-opacity": hoverStateFilter(
-              ["case", ["get", "has_match"], 0.5, 0.2],
-              1.0,
-            ),
-          }}
-          bind:hovered={hoveredTarget}
-          on:click={generateTestCase}
-        />
-      </GeoJSON>
-    </MapLibre>
-  </div>
+      {#if sourceGj.features.length > 0}
+        <button class="btn btn-secondary" onclick={swap}>Swap</button>
+        <button class="btn btn-secondary" onclick={zoomFit}>Zoom to fit</button>
+
+        <div style:background={sourceColor}>Sources</div>
+        <p>{sourceGj.features.length} sources</p>
+
+        <div style:background={targetColor}>Target</div>
+        <p>
+          {targetGj.features.length} targets, with {matches.filter(
+            (x) => x.matching_sources.length > 0,
+          ).length} matching a source
+        </p>
+        <Checkbox bind:checked={showTargetsWithMatches}>
+          Show targets matching a source
+        </Checkbox>
+
+        <Settings bind:options onChange={recalculate} />
+      {/if}
+    </div>
+  {/snippet}
+
+  {#snippet main()}
+    <div style="position:relative; width: 100%; height: 100vh;">
+      <MapLibre
+        {style}
+        bind:map
+        hash
+        on:error={(e) => {
+          // @ts-ignore ErrorEvent isn't exported
+          console.log(e.detail.error);
+        }}
+      >
+        <StandardControls {map} />
+        <MapContextMenu {map} />
+        <Basemaps bind:style choice="Maptiler Dataviz" />
+
+        <GeoJSON data={sourceGj}>
+          <LineLayer
+            manageHoverState
+            paint={{
+              "line-width": [
+                "case",
+                ["in", ["id"], ["literal", matchingSourceIndices]],
+                8,
+                5,
+              ],
+              "line-color": sourceColor,
+              "line-opacity": hoverStateFilter(0.5, 1.0),
+            }}
+          />
+        </GeoJSON>
+
+        <GeoJSON data={targetGj}>
+          <LineLayer
+            manageHoverState
+            filter={showTargetsWithMatches
+              ? undefined
+              : ["!", ["get", "has_match"]]}
+            paint={{
+              "line-width": 8,
+              "line-color": targetColor,
+              "line-opacity": hoverStateFilter(
+                ["case", ["get", "has_match"], 0.5, 0.2],
+                1.0,
+              ),
+            }}
+            bind:hovered={hoveredTarget}
+            on:click={generateTestCase}
+          />
+        </GeoJSON>
+      </MapLibre>
+    </div>
+  {/snippet}
 </Layout>

@@ -1,6 +1,10 @@
 <script lang="ts">
-  export let options: any;
-  export let onChange: () => void;
+  interface Props {
+    options: any;
+    onChange: () => void;
+  }
+
+  let { options = $bindable(), onChange }: Props = $props();
 </script>
 
 <div class="card">
@@ -19,7 +23,7 @@
           min="0"
           max="500"
           step="1"
-          on:change={onChange}
+          onchange={onChange}
         />
       </label>
 
@@ -34,7 +38,7 @@
           min="0"
           max="90"
           step="1"
-          on:change={onChange}
+          onchange={onChange}
         />
       </label>
 
@@ -49,7 +53,7 @@
           min="1"
           max="10"
           step="0.1"
-          on:change={onChange}
+          onchange={onChange}
         />
       </label>
 
@@ -63,7 +67,7 @@
           min="1"
           max="50"
           step="1"
-          on:change={onChange}
+          onchange={onChange}
         />
       </label>
     </form>
