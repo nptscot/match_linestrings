@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from "svelte/legacy";
-
   import "bootstrap/dist/css/bootstrap.min.css";
   import "@fortawesome/fontawesome-free/css/all.min.css";
   import { autosaveKey, type TargetGJ, type Reviewed } from "./";
@@ -25,7 +23,6 @@
     bbox,
   } from "svelte-utils/map";
   import {
-    notNull,
     downloadGeneratedFile,
     QualitativeLegend,
     Checkbox,
@@ -35,7 +32,7 @@
   import SetupMode from "./SetupMode.svelte";
 
   let map: Map | undefined = $state();
-  let style = $state(basemapStyles["Maptiler Dataviz"]);
+  let basemap = $state("Maptiler Dataviz");
 
   let sourceGj = $state(emptyGeojson());
   let targetGj: TargetGJ = $state(emptyGeojson() as TargetGJ);
@@ -70,7 +67,7 @@
     }
   });
 
-  run(() => {
+  $effect(() => {
     if (setupDone) {
       console.log(`Autosaving with ${numReviewed} reviewed targets`);
       window.localStorage.setItem(
@@ -141,18 +138,18 @@
     window.localStorage.removeItem(autosaveKey);
   }
 
-  function onClickTarget(e: CustomEvent<LayerClickInfo>) {
+  function onClickTarget(e: LayerClickInfo) {
     if (!setupDone) {
       return;
     }
-    clickedTarget = e.detail.features[0].id as number;
+    clickedTarget = e.features[0].id as number;
   }
 
-  function onClickSource(e: CustomEvent<LayerClickInfo>) {
+  function onClickSource(e: LayerClickInfo) {
     if (!setupDone || clickedTarget == null) {
       return;
     }
-    let id = e.detail.features[0].id as number;
+    let id = e.features[0].id as number;
     let props = targetGj.features[clickedTarget].properties;
     if (props.matching_sources.includes(id)) {
       props.matching_sources = props.matching_sources.filter((x) => x != id);
@@ -237,17 +234,17 @@
   {#snippet main()}
     <div style="position:relative; width: 100%; height: 100vh;">
       <MapLibre
-        {style}
+        style={basemapStyles[basemap]}
         bind:map
         hash
-        on:error={(e) => {
+        onerror={(e) => {
           // @ts-ignore ErrorEvent isn't exported
-          console.log(e.detail.error);
+          console.log(e.error);
         }}
       >
         <StandardControls {map} />
         <MapContextMenu {map} />
-        <Basemaps bind:style choice="Maptiler Dataviz" />
+        <Basemaps bind:basemap />
 
         {#if setupDone}
           <div class="map-panel">
@@ -285,13 +282,13 @@
               "line-opacity": hoverStateFilter(0.5, 1.0),
             }}
             hoverCursor={clickedTarget == null ? undefined : "pointer"}
-            on:click={onClickSource}
+            onclick={onClickSource}
           >
             {#if clickedTarget != null}
               <Popup openOn="hover">
                 {#snippet children({ data })}
-                  Source {notNull(data).id} -- click to {matchingSourceIndices.includes(
-                    notNull(data).id,
+                  Source {data!.id} -- click to {matchingSourceIndices.includes(
+                    data!.id as number,
                   )
                     ? "remove"
                     : "add"}
@@ -344,7 +341,7 @@
               ],
             }}
             hoverCursor="pointer"
-            on:click={onClickTarget}
+            onclick={onClickTarget}
           />
 
           <SymbolLayer

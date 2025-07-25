@@ -8,9 +8,10 @@
   <body>
     <div id="app"></div>
     <script type="module">
+      import { mount } from "svelte";
       import ReviewMatches from "./src/test/ReviewMatches.svelte";
 
-      new ReviewMatches({
+      mount(ReviewMatches, {
         target: document.getElementById("app"),
       });
     </script>

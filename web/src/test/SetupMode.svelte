@@ -50,9 +50,9 @@
     }
   }
 
-  let fileInput: HTMLInputElement = $state();
+  let fileInput: HTMLInputElement | undefined = $state();
   async function loadFiles(e: Event) {
-    if (!fileInput.files) {
+    if (!fileInput?.files) {
       return;
     }
     let len = fileInput.files.length;

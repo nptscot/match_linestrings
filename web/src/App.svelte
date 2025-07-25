@@ -3,7 +3,7 @@
   import { bboxPolygon } from "@turf/bbox-polygon";
   import { booleanIntersects } from "@turf/boolean-intersects";
   import { onMount } from "svelte";
-  import type { Map } from "maplibre-gl";
+  import type { Map, MapGeoJSONFeature } from "maplibre-gl";
   import {
     GeoJSON,
     MapLibre,
@@ -26,14 +26,14 @@
   import Settings from "./Settings.svelte";
 
   let map: Map | undefined = $state();
-  let style = $state(basemapStyles["Maptiler Dataviz"]);
+  let basemap = $state("Maptiler Dataviz");
 
   let sourceGj = $state(emptyGeojson());
   let sourceColor = "red";
 
   let targetGj = $state(emptyGeojson());
   let targetColor = "blue";
-  let hoveredTarget: Feature | null = $state(null);
+  let hoveredTarget: (Feature & MapGeoJSONFeature) | undefined = $state();
   let showTargetsWithMatches = $state(true);
 
   let options = $state({
@@ -80,9 +80,9 @@
     targetGj = targetGj;
   }
 
-  let fileInput: HTMLInputElement = $state();
+  let fileInput: HTMLInputElement | undefined = $state();
   async function loadFiles(e: Event) {
-    if (!fileInput.files) {
+    if (!fileInput?.files) {
       return;
     }
     let len = fileInput.files.length;
@@ -95,7 +95,7 @@
       sourceGj = await loadFile(fileInput.files[0]);
       targetGj = await loadFile(fileInput.files[1]);
       zoomFit();
-      hoveredTarget = null;
+      hoveredTarget = undefined;
       recalculate();
     } catch (err) {
       window.alert(`Bad input file: ${err}`);
@@ -147,8 +147,8 @@
     return features;
   }
 
-  function generateTestCase(e: CustomEvent<LayerClickInfo>) {
-    let clickedTarget = targetGj.features[e.detail.features[0].id as number];
+  function generateTestCase(e: LayerClickInfo) {
+    let clickedTarget = targetGj.features[e.features[0].id as number];
     let box = bboxPolygon(bbox(clickedTarget));
 
     downloadGeneratedFile(
@@ -178,58 +178,56 @@
 
 <Layout>
   {#snippet left()}
-    <div>
-      <h1>Match LineStrings</h1>
+    <h1>Match LineStrings</h1>
 
-      <a href="review.html">Looking for the tool to review test cases?</a>
+    <a href="review.html">Looking for the tool to review test cases?</a>
 
-      <label class="form-label">
-        Load two .geojson files
-        <input
-          class="form-control"
-          bind:this={fileInput}
-          onchange={loadFiles}
-          type="file"
-          multiple
-        />
-      </label>
+    <label class="form-label">
+      Load two .geojson files
+      <input
+        class="form-control"
+        bind:this={fileInput}
+        onchange={loadFiles}
+        type="file"
+        multiple
+      />
+    </label>
 
-      {#if sourceGj.features.length > 0}
-        <button class="btn btn-secondary" onclick={swap}>Swap</button>
-        <button class="btn btn-secondary" onclick={zoomFit}>Zoom to fit</button>
+    {#if sourceGj.features.length > 0}
+      <button class="btn btn-secondary" onclick={swap}>Swap</button>
+      <button class="btn btn-secondary" onclick={zoomFit}>Zoom to fit</button>
 
-        <div style:background={sourceColor}>Sources</div>
-        <p>{sourceGj.features.length} sources</p>
+      <div style:background={sourceColor}>Sources</div>
+      <p>{sourceGj.features.length} sources</p>
 
-        <div style:background={targetColor}>Target</div>
-        <p>
-          {targetGj.features.length} targets, with {matches.filter(
-            (x) => x.matching_sources.length > 0,
-          ).length} matching a source
-        </p>
-        <Checkbox bind:checked={showTargetsWithMatches}>
-          Show targets matching a source
-        </Checkbox>
+      <div style:background={targetColor}>Target</div>
+      <p>
+        {targetGj.features.length} targets, with {matches.filter(
+          (x) => x.matching_sources.length > 0,
+        ).length} matching a source
+      </p>
+      <Checkbox bind:checked={showTargetsWithMatches}>
+        Show targets matching a source
+      </Checkbox>
 
-        <Settings bind:options onChange={recalculate} />
-      {/if}
-    </div>
+      <Settings bind:options onChange={recalculate} />
+    {/if}
   {/snippet}
 
   {#snippet main()}
     <div style="position:relative; width: 100%; height: 100vh;">
       <MapLibre
-        {style}
+        style={basemapStyles[basemap]}
         bind:map
         hash
-        on:error={(e) => {
+        onerror={(e) => {
           // @ts-ignore ErrorEvent isn't exported
-          console.log(e.detail.error);
+          console.log(e.error);
         }}
       >
         <StandardControls {map} />
         <MapContextMenu {map} />
-        <Basemaps bind:style choice="Maptiler Dataviz" />
+        <Basemaps bind:basemap />
 
         <GeoJSON data={sourceGj}>
           <LineLayer
@@ -262,7 +260,7 @@
               ),
             }}
             bind:hovered={hoveredTarget}
-            on:click={generateTestCase}
+            onclick={generateTestCase}
           />
         </GeoJSON>
       </MapLibre>
