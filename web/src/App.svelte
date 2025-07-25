@@ -54,9 +54,7 @@
   });
 
   let matchingSourceIndices = $derived(
-    hoveredTarget == null
-      ? []
-      : matches[hoveredTarget.id as number].matching_sources,
+    hoveredTarget ? matches[hoveredTarget.id as number].matching_sources : [],
   );
 
   function recalculate() {
@@ -77,7 +75,6 @@
     for (let [idx, f] of targetGj.features.entries()) {
       f.properties!.has_match = matches[idx].matching_sources.length > 0;
     }
-    targetGj = targetGj;
   }
 
   let fileInput: HTMLInputElement | undefined = $state();
@@ -221,7 +218,6 @@
         bind:map
         hash
         onerror={(e) => {
-          // @ts-ignore ErrorEvent isn't exported
           console.log(e.error);
         }}
       >

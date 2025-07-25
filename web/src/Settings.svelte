@@ -1,6 +1,12 @@
 <script lang="ts">
   interface Props {
-    options: any;
+    options: {
+      buffer_meters: number;
+      angle_diff_threshold: number;
+      length_ratio_threshold: number;
+      midpt_dist_threshold: number;
+    };
+    // TODO Reconsider if necessary
     onChange: () => void;
   }
 

@@ -44,7 +44,6 @@
         f.properties.matching_sources = matches[idx].matching_sources;
         f.properties.reviewed ??= "unreviewed";
       }
-      targetGj = targetGj;
     } catch (err) {
       window.alert(`Bug: ${err}`);
     }

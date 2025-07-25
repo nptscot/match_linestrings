@@ -164,71 +164,69 @@
 
 <Layout>
   {#snippet left()}
-    <div>
-      <h1>Manually specify LineString matchings for test cases</h1>
+    <h1>Manually specify LineString matchings for test cases</h1>
 
-      <div>
-        <a
-          class="icon-link mb-3"
-          href="https://github.com/nptscot/match_linestrings/blob/main/tests/README.md"
-          target="_blank"
-        >
-          About <i class="fa-solid fa-arrow-up-right-from-square"></i>
-        </a>
+    <div>
+      <a
+        class="icon-link mb-3"
+        href="https://github.com/nptscot/match_linestrings/blob/main/tests/README.md"
+        target="_blank"
+      >
+        About <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      </a>
+    </div>
+
+    {#if !setupDone}
+      <SetupMode bind:sourceGj bind:targetGj bind:setupDone {zoomFit} />
+    {:else}
+      <div style="display: flex; justify-content: space-between;">
+        <button class="btn btn-outline-danger" onclick={backToSetup}>
+          Start over
+        </button>
+        <button class="btn btn-outline-secondary" onclick={zoomFit}>
+          Zoom to fit
+        </button>
       </div>
 
-      {#if !setupDone}
-        <SetupMode bind:sourceGj bind:targetGj bind:setupDone {zoomFit} />
-      {:else}
-        <div style="display: flex; justify-content: space-between;">
-          <button class="btn btn-outline-danger" onclick={backToSetup}>
-            Start over
-          </button>
-          <button class="btn btn-outline-secondary" onclick={zoomFit}>
-            Zoom to fit
-          </button>
-        </div>
+      <br />
 
-        <br />
-
+      <div
+        class="progress"
+        role="progressbar"
+        aria-valuenow={numReviewed}
+        aria-valuemin="0"
+        aria-valuemax={targetGj.features.length}
+      >
         <div
-          class="progress"
-          role="progressbar"
-          aria-valuenow={numReviewed}
-          aria-valuemin="0"
-          aria-valuemax={targetGj.features.length}
-        >
-          <div
-            class="progress-bar"
-            style:width={`${(100 * numReviewed) / targetGj.features.length}%`}
-          ></div>
-        </div>
-        <p>{numReviewed} / {targetGj.features.length} targets reviewed</p>
+          class="progress-bar"
+          style:width={`${(100 * numReviewed) / targetGj.features.length}%`}
+        ></div>
+      </div>
+      <p>{numReviewed} / {targetGj.features.length} targets reviewed</p>
 
-        <button class="btn btn-outline-success" onclick={downloadReviewed}>
-          Download reviews
-        </button>
+      <button class="btn btn-outline-success" onclick={downloadReviewed}>
+        Download reviews
+      </button>
 
-        <div class="mt-5">
-          <Checkbox bind:checked={showLabels}>Show labels for matches</Checkbox>
+      <div class="mt-5">
+        <Checkbox bind:checked={showLabels}>Show labels for matches</Checkbox>
+      </div>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Legend</h5>
+          <QualitativeLegend
+            itemsPerRow={1}
+            labelColors={{
+              Confirmed: "green",
+              "Not sure": "orange",
+              Unreviewed: "red",
+              Source: "grey",
+            }}
+          />
+          <p>Thinner lines have a match, thicker are off-road</p>
         </div>
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Legend</h5>
-            <QualitativeLegend
-              itemsPerRow={1}
-              labelColors={{
-                Confirmed: "green",
-                "Not sure": "orange",
-                Unreviewed: "red",
-                Source: "grey",
-              }}
-            />
-            <p>Thinner lines have a match, thicker are off-road</p>
-          </div>
-        </div>
-      {/if}
-    </div>
+      </div>
+    {/if}
   {/snippet}
 
   {#snippet main()}
@@ -379,6 +377,7 @@
 <style>
   .map-panel {
     position: absolute;
+    z-index: 100;
     top: 10px;
     left: 10%;
     right: 10%;

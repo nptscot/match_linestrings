@@ -1,14 +1,16 @@
-<!-- @migration-task Error while migrating Svelte code: migrating this component would require adding a `$props` rune but there's already a variable named props.
-     Rename the variable and try again or migrate by hand. -->
 <script lang="ts">
   import type { Reviewed, TargetGJ } from "./";
 
-  export let clickedTarget: number;
-  export let targetGj: TargetGJ;
-  export let onConfirm: (value: Reviewed) => void;
-  export let onCancel: () => void;
+  interface Props {
+    clickedTarget: number;
+    targetGj: TargetGJ;
+    onConfirm: (value: Reviewed) => void;
+    onCancel: () => void;
+  }
 
-  $: props = targetGj.features[clickedTarget].properties;
+  let { clickedTarget, targetGj, onConfirm, onCancel }: Props = $props();
+
+  let targetProps = $derived(targetGj.features[clickedTarget].properties);
 
   function onKeyDown(e: KeyboardEvent) {
     if ((e.target as HTMLElement).tagName == "INPUT") {
@@ -27,18 +29,18 @@
   }
 </script>
 
-<svelte:window on:keydown={onKeyDown} />
+<svelte:window onkeydown={onKeyDown} />
 
 <div style="display: flex; justify-content: space-between;">
   <h3>
     Target {clickedTarget}:
-    {#if props.matching_sources.length > 0}
-      {JSON.stringify(props.matching_sources)}
+    {#if targetProps.matching_sources.length > 0}
+      {JSON.stringify(targetProps.matching_sources)}
     {:else}
       no matches (off-road)
     {/if}
   </h3>
-  <button class="btn btn-secondary" on:click={onCancel}>
+  <button class="btn btn-secondary" onclick={onCancel}>
     <kbd>Escape</kbd>
     - Back
   </button>
@@ -49,8 +51,8 @@
 <div style="display: flex; justify-content: space-between;">
   <button
     class="btn btn-danger"
-    class:current={props.reviewed == "unreviewed"}
-    on:click={() => onConfirm("unreviewed")}
+    class:current={targetProps.reviewed == "unreviewed"}
+    onclick={() => onConfirm("unreviewed")}
   >
     <kbd>1</kbd>
     - Unreviewed
@@ -58,8 +60,8 @@
 
   <button
     class="btn btn-warning"
-    class:current={props.reviewed == "not sure"}
-    on:click={() => onConfirm("not sure")}
+    class:current={targetProps.reviewed == "not sure"}
+    onclick={() => onConfirm("not sure")}
   >
     <kbd>2</kbd>
     - Not sure
@@ -67,8 +69,8 @@
 
   <button
     class="btn btn-success"
-    class:current={props.reviewed == "confirmed"}
-    on:click={() => onConfirm("confirmed")}
+    class:current={targetProps.reviewed == "confirmed"}
+    onclick={() => onConfirm("confirmed")}
   >
     <kbd>3</kbd>
     - Confirm correct
