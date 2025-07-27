@@ -2,7 +2,7 @@
   import "bootstrap/dist/css/bootstrap.min.css";
   import "@fortawesome/fontawesome-free/css/all.min.css";
   import { autosaveKey, type TargetGJ, type Reviewed } from "./";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import type { Map } from "maplibre-gl";
   import {
     GeoJSON,
@@ -64,6 +64,15 @@
       }
     } catch (err) {
       console.log(`Couldn't restore data from local storage: ${err}`);
+    }
+  });
+
+  // TODO Hack
+  $effect(() => {
+    if (map) {
+      tick().then(() => {
+        map?.resize();
+      });
     }
   });
 

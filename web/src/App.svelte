@@ -2,7 +2,7 @@
   import "bootstrap/dist/css/bootstrap.min.css";
   import { bboxPolygon } from "@turf/bbox-polygon";
   import { booleanIntersects } from "@turf/boolean-intersects";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import type { Map, MapGeoJSONFeature } from "maplibre-gl";
   import {
     GeoJSON,
@@ -51,6 +51,15 @@
 
   onMount(async () => {
     await backend.default();
+  });
+
+  // TODO Hack
+  $effect(() => {
+    if (map) {
+      tick().then(() => {
+        map?.resize();
+      });
+    }
   });
 
   let matchingSourceIndices = $derived(
