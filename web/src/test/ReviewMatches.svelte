@@ -21,6 +21,7 @@
     MapContextMenu,
     emptyGeojson,
     bbox,
+    Geocoder,
   } from "svelte-utils/map";
   import {
     downloadGeneratedFile,
@@ -32,6 +33,7 @@
   import SetupMode from "./SetupMode.svelte";
 
   let map: Map | undefined = $state();
+  let loaded = $state(false);
   let basemap = $state("Maptiler Dataviz");
 
   let sourceGj = $state(emptyGeojson());
@@ -241,8 +243,9 @@
   {#snippet main()}
     <div style="position:relative; width: 100%; height: 100vh;">
       <MapLibre
-        style={basemapStyles[basemap]}
+        style={basemapStyles.get(basemap)!}
         bind:map
+        bind:loaded
         hash
         onerror={(e) => {
           // @ts-ignore ErrorEvent isn't exported
@@ -252,6 +255,7 @@
         <StandardControls {map} />
         <MapContextMenu {map} />
         <Basemaps bind:basemap />
+        <Geocoder {map} {loaded} />
 
         {#if setupDone}
           <div class="map-panel">
@@ -394,5 +398,11 @@
     background: white;
     border: 1px solid black;
     padding: 16px;
+  }
+
+  :global(.maplibregl-ctrl-geocoder) {
+    position: absolute;
+    top: 90px;
+    left: 3px;
   }
 </style>
